@@ -173,7 +173,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     #
     # This keeps everything same-origin and authenticated without manual URLs.
     try:
-        hass.components.frontend.async_register_panel(
+        # Import frontend here to avoid relying on hass.components, which may not
+        # expose the frontend module as an attribute on HomeAssistant in all
+        # environments/versions.
+        from homeassistant.components import frontend as ha_frontend
+
+        ha_frontend.async_register_panel(
+            hass=hass,
             component_name="custom",
             frontend_url_path="reterminal-dashboard",
             sidebar_title="reTerminal Dashboard",

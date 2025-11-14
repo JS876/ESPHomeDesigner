@@ -176,5 +176,5 @@ This is a passion project that's almost ready for prime time. Found a bug? Have 
 
 ## License
 
-GPL 3.0
+Made with love, free and Open Source under the GPL 3.0 license. Share the love!
 

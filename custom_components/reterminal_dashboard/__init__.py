@@ -168,14 +168,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.http.register_view(ReTerminalDashboardFontView(hass))
     _LOGGER.info("%s: Font view registered at /reterminal-dashboard/materialdesignicons-webfont.ttf", DOMAIN)
 
-    # Register as a frontend sidebar panel
-    await hass.components.frontend.async_register_built_in_panel(
-        component_name="custom",
-        sidebar_title="reTerminal",
-        sidebar_icon="mdi:monitor-dashboard",
-        frontend_url_path="reterminal-dashboard",
-        config={"_panel_custom": {"name": "panel-iframe", "embed_iframe": True, "trust_external": False}},
-        require_admin=False,
+    # Register as a frontend sidebar panel using panel_iframe
+    await hass.components.panel_iframe.async_setup(
+        hass,
+        {
+            "panel_iframe": {
+                "reterminal": {
+                    "title": "reTerminal",
+                    "icon": "mdi:monitor-dashboard",
+                    "url": "/reterminal-dashboard",
+                    "require_admin": False,
+                }
+            }
+        },
     )
     _LOGGER.info("%s: Frontend sidebar panel registered", DOMAIN)
 
@@ -198,7 +203,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         
         # Unregister the sidebar panel
         try:
-            await hass.components.frontend.async_remove_panel("reterminal-dashboard")
+            hass.components.frontend.async_remove_panel("reterminal")
             _LOGGER.debug("%s: Frontend sidebar panel unregistered", DOMAIN)
         except Exception as e:
             _LOGGER.warning("%s: Failed to unregister panel: %s", DOMAIN, e)

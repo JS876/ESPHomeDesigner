@@ -76,7 +76,7 @@ def generate_snippet(device: DeviceConfig) -> str:
     parts.append(_generate_globals())
     parts.append(_generate_fonts())
     parts.append(_generate_outputs_and_buzzer())
-    parts.append(_generate_sensors_and_text_sensors())
+    parts.append(_generate_sensors_and_text_sensors(device))
     parts.append(_generate_navigation_buttons(device))
     parts.append(_generate_scripts(device))
     parts.append(_generate_display_block(device))
@@ -135,10 +135,35 @@ rtttl:
 """
 
 
-def _generate_sensors_and_text_sensors() -> str:
-    # Minimal set; references can be extended later or customized by editor.
-    # Note: we do not define WiFi or other base sensors that might conflict.
-    return """sensor:
+def _generate_sensors_and_text_sensors(device: DeviceConfig) -> str:
+    """
+    Generate sensor and text_sensor blocks including HomeAssistant platform entries
+    for all sensor_text widgets found in the device's pages.
+    """
+    # Collect all unique entity_ids from sensor_text widgets
+    entity_ids = set()
+    for page in device.pages:
+        for widget in page.widgets:
+            wtype = (widget.type or "").lower()
+            if wtype in ("sensor", "sensor_text"):
+                entity_id = (widget.entity_id or "").strip()
+                if entity_id:
+                    entity_ids.add(entity_id)
+    
+    # Build text_sensor entries for each unique entity
+    text_sensor_entries = []
+    for entity_id in sorted(entity_ids):
+        # Create a safe ID from entity_id (replace dots with underscores)
+        safe_id = entity_id.replace(".", "_").replace("-", "_")
+        text_sensor_entries.append(f"""  - platform: homeassistant
+    id: {safe_id}
+    entity_id: {entity_id}
+    internal: true""")
+    
+    text_sensors_block = "\n".join(text_sensor_entries) if text_sensor_entries else """  # No sensor_text widgets configured yet.
+  # Add widgets in the editor to auto-generate HomeAssistant text_sensor entries."""
+    
+    return f"""sensor:
   # Example onboard / derived sensors; adjust entity_ids or wiring as needed.
   # Battery voltage (ADC)
   - platform: adc
@@ -172,12 +197,7 @@ def _generate_sensors_and_text_sensors() -> str:
     update_interval: 60s
 
 text_sensor:
-  # Placeholder for HA text-based entities; adjust via dashboard editor / future versions.
-  # Example:
-  # - platform: homeassistant
-  #   id: some_text_source
-  #   entity_id: sensor.some_text
-  #   internal: true
+{text_sensors_block}
 """
 
 
@@ -384,12 +404,27 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
         dst.append(f'{indent}it.print({x}, {y}, {font}, {fg}, "{text}");')
         return
 
-    # Sensor text (label + value placeholder; binding left to user/HA)
+    # Sensor text (label + value from HA sensor)
     if wtype in ("sensor", "sensor_text"):
-        label = (widget.title or widget.entity_id or "sensor").replace('"', '\\"')
+        entity_id = (widget.entity_id or "").strip()
+        label = (widget.title or "").replace('"', '\\"')
         font = _resolve_font(props)
-        dst.append(f"{indent}// TODO: bind to actual ESPHome/HA sensor id for {widget.entity_id}")
-        dst.append(f'{indent}it.printf({x}, {y}, {font}, {fg}, "{label}: N/A");')
+        
+        if entity_id:
+            # Generate safe ID from entity_id
+            safe_id = entity_id.replace(".", "_").replace("-", "_")
+            
+            if label:
+                # Show label + sensor value
+                dst.append(f'{indent}it.printf({x}, {y}, {font}, {fg}, "{label}: %s", id({safe_id}).state.c_str());')
+            else:
+                # Show just sensor value
+                dst.append(f'{indent}it.printf({x}, {y}, {font}, {fg}, "%s", id({safe_id}).state.c_str());')
+        else:
+            # No entity_id configured - show placeholder
+            placeholder = label or "sensor"
+            dst.append(f'{indent}// No entity_id configured for this sensor_text widget')
+            dst.append(f'{indent}it.printf({x}, {y}, {font}, {fg}, "{placeholder}: N/A");')
         return
 
     # Rectangle / filled rectangle

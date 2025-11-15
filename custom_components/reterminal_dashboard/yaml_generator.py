@@ -320,6 +320,29 @@ def _generate_navigation_buttons(device: DeviceConfig) -> str:
       - lambda: 'id(display_page) = {idx};'
       - component.update: epaper_display""")
     
+    # Add buzzer control buttons (hardware feature - always included)
+    buttons.append("""
+
+  # Buzzer control buttons (hardware feature)
+  - platform: template
+    name: "reTerminal Beep"
+    id: reterminal_beep
+    on_press:
+      - rtttl.play: "beep:d=32,o=5,b=200:16e6"
+
+  - platform: template
+    name: "reTerminal Beep Error"
+    id: reterminal_beep_error
+    on_press:
+      - rtttl.play: "error:d=16,o=5,b=200:c6"
+
+  - platform: template
+    name: "reTerminal Play Star Wars"
+    id: reterminal_star_wars
+    on_press:
+      - rtttl.play: "StarWars:d=4,o=5,b=45:32p,32f,32f,32f,8a#.,8f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32d#,8c6,32p,32f,32f,32f,8a#.,8f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32d#,8c6"
+""")
+    
     return "".join(buttons)
 
 
@@ -534,7 +557,8 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
         size = int(props.get("size", 48) or 48)
         font_id = f"font_mdi_{size}"
         
-        font_ref = props.get("font_ref", font_id)
+        # Always use the calculated font_id, ignore any stored font_ref (could be outdated)
+        font_ref = font_id
         
         # Handle color property - icon widgets have their own color, don't use base fg
         color_prop = (props.get("color") or "black").lower()

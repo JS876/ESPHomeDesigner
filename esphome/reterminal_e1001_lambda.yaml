@@ -224,61 +224,6 @@ binary_sensor:
 
 
 # ============================================================================
-# Buzzer Control Buttons (OPTIONAL - for Home Assistant UI)
-# ============================================================================
-# ⚠️ IMPORTANT: YAML does NOT allow duplicate "button:" sections! ⚠️
-#
-# The generated code from the editor ALSO includes a "button:" section with
-# page navigation buttons. You MUST merge these buzzer buttons into that section.
-#
-# HOW TO USE THESE BUZZER BUTTONS:
-# 1. Copy the button definitions below (the "- platform: template" blocks)
-# 2. When you paste the generated code, find its "button:" section
-# 3. Add these 4 buzzer button definitions INSIDE that section (no second "button:" header!)
-# 4. Result: ONE "button:" section with all buttons (navigation + buzzer)
-#
-# EXAMPLE - Correct merged structure:
-#   button:
-#     - platform: template
-#       name: "reTerminal Next Page"
-#       ...
-#     - platform: template
-#       name: "reTerminal Beep Short"    # <-- buzzer buttons merged here
-#       ...
-#
-# ❌ WRONG: Two separate "button:" sections will cause compilation errors!
-# ============================================================================
-
-# Copy these button definitions (without the "button:" header):
-
-  - platform: template
-    name: "reTerminal Beep Short"
-    id: reterminal_beep_short
-    on_press:
-      - rtttl.play: "beep:d=32,o=5,b=200:16e6"
-
-  - platform: template
-    name: "reTerminal Beep OK"
-    id: reterminal_beep_ok
-    on_press:
-      - rtttl.play: "ok:d=16,o=5,b=200:e6"
-
-  - platform: template
-    name: "reTerminal Beep Error"
-    id: reterminal_beep_error
-    on_press:
-      - rtttl.play: "error:d=16,o=5,b=200:c6"
-
-  - platform: template
-    name: "reTerminal Play Star Wars"
-    id: reterminal_star_wars
-    on_press:
-      - rtttl.play: "StarWars:d=4,o=5,b=45:32p,32f,32f,32f,8a#.,8f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32d#,8c6,32p,32f,32f,32f,8a#.,8f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32d#,8c6"
-
-# ============================================================================
-
-
-# ============================================================================
 # STEP 5: Paste generated sections from Home Assistant editor
 # ============================================================================
 # After designing your dashboard:
@@ -291,7 +236,7 @@ binary_sensor:
 #    ✓ text_sensor:  (ONLY if you used sensor_text widgets)
 #                    If generated, ADD these to the sensor: section above
 #                    (don't create a duplicate sensor: section)
-#    ✓ button:       (optional - virtual buttons for Home Assistant)
+#    ✓ button:       (always generated - includes page navigation + buzzer controls)
 #    ✓ script:       (always generated for page refresh)
 #    ✓ display:      (always generated - complete display configuration)
 #

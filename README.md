@@ -2,10 +2,6 @@
 
 ![Dashboard Editor Screenshot](https://raw.githubusercontent.com/koosoli/ReTerminalDesigner/main/screenshots/Screenshot1.png)
 
-> **⚠️ ALPHA VERSION - NOT PRODUCTION READY**
-> 
-> This project is currently in active development and shared for testing/feedback purposes. The code generator sometimes produces uncompilable YAML output - there are still bugs to crush! If you just want something that works out of the box, please wait for a stable release. If you want to help test and report issues, you're very welcome! 🙏
-
 **No more hand-coding ESPHome display lambdas! 🎉**
 
 Got a Seeed Studio reTerminal E1001 and frustrated with manually writing display code? Yeah, me too. So I built a drag-and-drop editor that runs right inside Home Assistant.
@@ -79,7 +75,10 @@ Done! Your custom dashboard is now running on the reTerminal.
 
 - **Text** - Static labels and headers
 - **Sensor Text** - Live values from Home Assistant entities
-- **Icon** - Material Design Icons (48x48)
+- **Icon** - Material Design Icons with customizable size and color
+  - Choose from 7000+ Material Design Icons
+  - Adjustable size (8-260px) - generates optimized fonts automatically
+  - Color options: black, white, gray (limited by e-paper)
 - **Shapes** - Rectangles, filled rectangles, circles, filled circles, lines
 - **Image** - Display photos and images with optional color inversion
   - Widget frame size sets ESPHome `resize:` parameter automatically
@@ -177,8 +176,7 @@ This is a passion project that's almost ready for prime time. Found a bug? Have 
 
 **Planned features:**
 - Weather card widgets
-- Graph/chart widgets  
-- Image widgets
+- Graph/chart widgets
 - Color e-ink support
 - More device types
 

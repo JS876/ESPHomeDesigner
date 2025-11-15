@@ -122,8 +122,9 @@ def _generate_fonts(device: DeviceConfig) -> str:
     """
     # Collect all unique icon codes from icon widgets
     icon_codes = set()
-    # Collect all unique image paths from image widgets
+    # Collect all unique image paths from image widgets and icon sizes
     image_paths = {}
+    icon_sizes = set()  # Track unique icon sizes
     
     for page in device.pages:
         for widget in page.widgets:
@@ -133,6 +134,9 @@ def _generate_fonts(device: DeviceConfig) -> str:
                 code = props.get("code", "").strip()
                 if code:
                     icon_codes.add(code)
+                # Collect icon size if specified
+                size = int(props.get("size", 48) or 48)
+                icon_sizes.add(size)
             elif wtype == "image":
                 props = widget.props or {}
                 path = props.get("path", "").strip()
@@ -171,15 +175,36 @@ def _generate_fonts(device: DeviceConfig) -> str:
         
         glyph_list = ", ".join(glyphs)
         
+        # Generate fonts for each unique size
+        if not icon_sizes:
+            icon_sizes = {48}  # Default size
+        
         font_lines.extend([
             "",
             "  # Material Design Icons for icon widgets",
-            "  # Copy materialdesignicons-webfont.ttf to your ESPHome fonts folder",
-            "  - file: fonts/materialdesignicons-webfont.ttf",
-            "    id: font_mdi_medium",
-            "    size: 48",
-            f"    glyphs: [{glyph_list}]"
+            "  # Copy materialdesignicons-webfont.ttf to your ESPHome fonts folder"
         ])
+        
+        # Generate a font for each unique size
+        for size in sorted(icon_sizes):
+            # Determine font ID based on size category
+            if size <= 40:
+                font_id = f"font_mdi_small"
+            elif size <= 60:
+                font_id = f"font_mdi_medium"
+            else:
+                font_id = f"font_mdi_large"
+            
+            # For custom sizes, use size-specific ID
+            if size != 48 or font_id != "font_mdi_medium":
+                font_id = f"font_mdi_{size}"
+            
+            font_lines.extend([
+                "  - file: fonts/materialdesignicons-webfont.ttf",
+                f"    id: {font_id}",
+                f"    size: {size}",
+                f"    glyphs: [{glyph_list}]"
+            ])
     
     result = "\n".join(font_lines)
     
@@ -472,12 +497,35 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
         except (ValueError, OverflowError):
             icon_char = chr(0xF0595)  # Fallback
         
-        font_ref = props.get("font_ref", "font_mdi_medium")
+        # Determine font based on size
+        size = int(props.get("size", 48) or 48)
+        if size <= 40:
+            font_id = f"font_mdi_small"
+        elif size <= 60:
+            font_id = f"font_mdi_medium"
+        else:
+            font_id = f"font_mdi_large"
+        
+        # For custom sizes, use size-specific ID
+        if size != 48 or font_id != "font_mdi_medium":
+            font_id = f"font_mdi_{size}"
+        
+        font_ref = props.get("font_ref", font_id)
+        
+        # Handle color property - icon widgets have their own color, don't use base fg
+        color_prop = (props.get("color") or "black").lower()
+        if color_prop == "white":
+            icon_color = "COLOR_OFF"
+        elif color_prop == "gray":
+            icon_color = "COLOR_ON"  # E-paper doesn't have gray, use black
+        else:  # black or default
+            icon_color = "COLOR_ON"
+        
         # Escape special characters
         escaped_char = icon_char.replace("\\", "\\\\").replace('"', '\\"')
         # Add marker comment for parser
         dst.append(f'{indent}// widget:icon id:{widget.id} type:icon x:{x} y:{y} w:{w} h:{h} code:{code}')
-        dst.append(f'{indent}it.print({x}, {y}, id({font_ref}), {fg}, "{escaped_char}");')
+        dst.append(f'{indent}it.print({x}, {y}, id({font_ref}), {icon_color}, "{escaped_char}");')
         return
 
     # Sensor text (label + value from HA sensor)

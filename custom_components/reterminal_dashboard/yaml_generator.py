@@ -258,33 +258,60 @@ def _generate_fonts(device: DeviceConfig) -> str:
 
 def _generate_text_sensors(device: DeviceConfig) -> str:
     """
-    Generate text_sensor blocks for ALL HomeAssistant entities used in any widget.
-    Includes sensor_text, progress_bar, battery_icon, and any other widget with entity_id.
+    Generate text_sensor and sensor blocks for HomeAssistant entities.
+    - text_sensor: for sensor_text widgets (string values)
+    - sensor: for progress_bar, battery_icon (numeric values)
     """
-    # Collect all unique entity_ids from ALL widgets that use entities
-    entity_ids = set()
+    # Collect entity_ids by type
+    text_entity_ids = set()
+    numeric_entity_ids = set()
+    
     for page in device.pages:
         for widget in page.widgets:
             entity_id = (widget.entity_id or "").strip()
-            if entity_id:
-                entity_ids.add(entity_id)
+            if not entity_id:
+                continue
+            
+            wtype = (widget.type or "").lower()
+            # Widgets that need numeric (float) values
+            if wtype in ("progress_bar", "battery_icon"):
+                numeric_entity_ids.add(entity_id)
+            # Widgets that can use text values
+            else:
+                text_entity_ids.add(entity_id)
     
-    if not entity_ids:
-        return "# No widgets with entities configured - no text_sensor section needed"
+    sections = []
     
-    # Build text_sensor entries for each unique entity
-    text_sensor_entries = []
-    for entity_id in sorted(entity_ids):
-        # Create a safe ID from entity_id (replace dots with underscores)
-        safe_id = entity_id.replace(".", "_").replace("-", "_")
-        text_sensor_entries.append(f"""  - platform: homeassistant
+    # Generate text_sensor section for text-based widgets
+    if text_entity_ids:
+        text_entries = []
+        for entity_id in sorted(text_entity_ids):
+            safe_id = entity_id.replace(".", "_").replace("-", "_")
+            text_entries.append(f"""  - platform: homeassistant
     id: {safe_id}
     entity_id: {entity_id}
     internal: true""")
+        
+        sections.append(f"""text_sensor:
+{chr(10).join(text_entries)}""")
     
-    return f"""text_sensor:
-{chr(10).join(text_sensor_entries)}
-"""
+    # Generate sensor section for numeric widgets
+    if numeric_entity_ids:
+        numeric_entries = []
+        for entity_id in sorted(numeric_entity_ids):
+            safe_id = entity_id.replace(".", "_").replace("-", "_")
+            numeric_entries.append(f"""  - platform: homeassistant
+    id: {safe_id}
+    entity_id: {entity_id}
+    internal: true""")
+        
+        sections.append(f"""sensor:
+{chr(10).join(numeric_entries)}""")
+    
+    if not sections:
+        return "# No widgets with entities configured"
+    
+    return "\n\n".join(sections) + "\n"
 
 
 def _generate_navigation_buttons(device: DeviceConfig) -> str:

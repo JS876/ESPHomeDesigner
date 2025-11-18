@@ -31,10 +31,13 @@ NOTE: This is an MVP generator:
 
 from __future__ import annotations
 
+import logging
 from typing import List
 
 from .models import DeviceConfig, PageConfig, WidgetConfig
 from .const import IMAGE_WIDTH, IMAGE_HEIGHT
+
+_LOGGER = logging.getLogger(__name__)
 
 
 SNIPPET_HEADER = """# ============================================================

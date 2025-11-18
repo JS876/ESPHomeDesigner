@@ -29,12 +29,15 @@ Behavior:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
 import yaml
 
 from .models import DeviceConfig, PageConfig, WidgetConfig
+
+_LOGGER = logging.getLogger(__name__)
 
 
 # Add custom constructor for ESPHome YAML tags like !lambda, !secret, etc.

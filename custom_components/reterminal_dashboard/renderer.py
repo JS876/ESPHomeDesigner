@@ -185,20 +185,6 @@ def _draw_widget_list(
         placeholder = w_cfg.props.get("placeholder", "")
         if placeholder:
             items = [placeholder]
-
-    prefix = w_cfg.props.get("prefix", "- ")
-
-    for item in items:
-        if y + line_height > max_y:
-            break
-        draw.text((x, y), f"{prefix}{item}", fill=0, font=font)
-        y += line_height
-
-
-def render_page_png(
-    hass: HomeAssistant,
-    device: DeviceConfig,
-    page: PageConfig,
 ) -> bytes:
     """
     Render a single page to PNG bytes.
@@ -223,19 +209,6 @@ def render_page_png(
 
         try:
             if wtype == "sensor":
-                _draw_widget_sensor(hass, draw, w_cfg)
-            elif wtype == "label":
-                _draw_widget_label(draw, w_cfg)
-            elif wtype == "clock":
-                _draw_widget_clock(hass, draw, w_cfg)
-            elif wtype == "list":
-                _draw_widget_list(hass, draw, w_cfg)
-            else:
-                # Fallback: treat unknown types as labels
-                _draw_widget_label(draw, w_cfg)
-        except Exception as exc:  # noqa: BLE001
-            _LOGGER.error(
-                "Error rendering widget %s on device %s: %s",
                 w_cfg.id,
                 device.device_id,
                 exc,

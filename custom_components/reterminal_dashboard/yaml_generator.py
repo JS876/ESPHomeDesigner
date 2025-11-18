@@ -85,6 +85,7 @@ def generate_snippet(device: DeviceConfig) -> str:
     parts.append(_generate_deep_sleep(device))
     parts.append(_generate_navigation_buttons(device))
     parts.append(_generate_scripts(device))
+    parts.append(_generate_graphs(device))
     parts.append(_generate_display_block(device))
 
     # Join with double newlines between major sections
@@ -195,13 +196,19 @@ def _generate_fonts(device: DeviceConfig) -> str:
                 props = widget.props or {}
                 path = props.get("path", "").strip()
                 if path:
+                    # Replicate clamping logic to match _append_widget_render
+                    # This ensures the ID matches the one generated in the render loop
+                    x = max(0, min(widget.x, IMAGE_WIDTH))
+                    y = max(0, min(widget.y, IMAGE_HEIGHT))
+                    width = max(1, min(widget.width, IMAGE_WIDTH - x))
+                    height = max(1, min(widget.height, IMAGE_HEIGHT - y))
+
                     # Generate safe ID from path
-                    safe_id = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
-                    safe_id = f"img_{safe_id}"
-                    # Store path with dimensions for resize
-                    width = widget.width or 100
-                    height = widget.height or 100
-                    image_paths[path] = {"id": safe_id, "width": width, "height": height}
+                    safe_path = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
+                    safe_id = f"img_{safe_path}_{width}x{height}"
+                    
+                    # Store path with dimensions for resize, keyed by (path, width, height)
+                    image_paths[(path, width, height)] = {"id": safe_id, "width": width, "height": height}
     
     # Base fonts - use selected font family for all standard sizes
     font_lines = [
@@ -277,10 +284,9 @@ def _generate_fonts(device: DeviceConfig) -> str:
     # Add image definitions if there are image widgets
     if image_paths:
         result += "\n\n\nimage:"
-        for path, img_data in sorted(image_paths.items()):
+        for (path, width, height), img_data in sorted(image_paths.items()):
             img_id = img_data["id"]
-            width = img_data["width"]
-            height = img_data["height"]
+            # width and height are already in the key/data
             result += f"\n  - file: \"{path}\""
             result += f"\n    id: {img_id}"
             result += f"\n    resize: {width}x{height}"
@@ -323,26 +329,34 @@ def _generate_text_sensors(device: DeviceConfig) -> str:
     if text_entity_ids:
         text_entries = []
         for entity_id in sorted(text_entity_ids):
+            # Skip local IDs (no dot) - assume they are defined elsewhere
+            if "." not in entity_id:
+                continue
             safe_id = entity_id.replace(".", "_").replace("-", "_")
             text_entries.append(f"""  - platform: homeassistant
     id: {safe_id}
     entity_id: {entity_id}
     internal: true""")
         
-        sections.append(f"""text_sensor:
+        if text_entries:
+            sections.append(f"""text_sensor:
 {chr(10).join(text_entries)}""")
     
     # Generate sensor section for numeric widgets
     if numeric_entity_ids:
         numeric_entries = []
         for entity_id in sorted(numeric_entity_ids):
+            # Skip local IDs (no dot) - assume they are defined elsewhere
+            if "." not in entity_id:
+                continue
             safe_id = entity_id.replace(".", "_").replace("-", "_")
             numeric_entries.append(f"""  - platform: homeassistant
     id: {safe_id}
     entity_id: {entity_id}
     internal: true""")
         
-        sections.append(f"""sensor:
+        if numeric_entries:
+            sections.append(f"""sensor:
 {chr(10).join(numeric_entries)}""")
     
     if not sections:
@@ -529,7 +543,24 @@ def _generate_scripts(device: DeviceConfig) -> str:
 """
 
 
-def _generate_display_block(device: DeviceConfig) -> str:
+def _generate_graphs(device: DeviceConfig) -> str:
+    """
+    Generate graph definitions for graph widgets.
+    """
+    graph_widgets = []
+    for page in device.pages:
+        for widget in page.widgets:
+            if (widget.type or "").lower() == "graph":
+                graph_widgets.append(widget)
+    
+    if not graph_widgets:
+        return "# No graph widgets configured"
+        
+    lines = ["graph:"]
+    for widget in graph_widgets:
+        props = widget.props or {}
+        entity_id = (widget.entity_id or "").strip()
+        if not entity_id:
     """
     Generate the display: epaper_display block with a lambda that:
     - Reads current display_page.
@@ -638,7 +669,7 @@ def _resolve_font(props: dict) -> str:
         return "id(font_normal)"
     if size == 24:
         return "id(font_header)"
-    
+
     # Fallback logic for unspecified sizes
     if size < 20:
         return "id(font_small)"
@@ -662,8 +693,8 @@ def _resolve_font_by_size(size: int) -> str:
     if size == 22:
         return "id(font_normal)"
     if size == 24:
-        return "id(font_header)"
-        
+        return "id(font_header)"        
+    
     # Fallback (should not be reached if logic matches above)
     if size < 20:
         return "id(font_small)"
@@ -686,7 +717,11 @@ def _wrap_with_condition(dst: List[str], indent: str, widget: WidgetConfig, cont
         return
     
     # Generate safe ID from entity_id for condition
-    safe_cond_id = widget.condition_entity.replace(".", "_").replace("-", "_")
+    if "." in widget.condition_entity:
+        safe_cond_id = widget.condition_entity.replace(".", "_").replace("-", "_")
+    else:
+        safe_cond_id = widget.condition_entity
+    
     cond_state = str(widget.condition_state).replace('"', '\\"')
     cond_op = widget.condition_operator or "=="
     
@@ -827,8 +862,11 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
         precision = int(props.get("precision", -1))
         
         if entity_id:
-            # Generate safe ID from entity_id
-            safe_id = entity_id.replace(".", "_").replace("-", "_")
+            # Generate safe ID from entity_id (handle local vs HA)
+            if "." in entity_id:
+                safe_id = entity_id.replace(".", "_").replace("-", "_")
+            else:
+                safe_id = entity_id
             
             # Add marker comment for parser with font sizes and font_family
             content.append(f'{indent}// widget:sensor_text id:{widget.id} type:sensor_text x:{x} y:{y} w:{w} h:{h} ent:{entity_id} title:"{label}" label_font:{label_font_size} value_font:{value_font_size} format:{value_format} font_family:{font_family} precision:{precision}')
@@ -916,8 +954,11 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
             _wrap_with_condition(dst, indent, widget, content)
             return
         
-        # Generate safe ID from entity_id
-        safe_id = entity_id.replace(".", "_").replace("-", "_")
+        # Generate safe ID from entity_id (handle local vs HA)
+        if "." in entity_id:
+            safe_id = entity_id.replace(".", "_").replace("-", "_")
+        else:
+            safe_id = entity_id
         
         # ============================================================================
         # CRITICAL: Progress bar marker comment format
@@ -983,8 +1024,11 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
             _wrap_with_condition(dst, indent, widget, content)
             return
         
-        # Generate safe ID from entity_id
-        safe_id = entity_id.replace(".", "_").replace("-", "_")
+        # Generate safe ID from entity_id (handle local vs HA)
+        if "." in entity_id:
+            safe_id = entity_id.replace(".", "_").replace("-", "_")
+        else:
+            safe_id = entity_id
         
         # ============================================================================
         # CRITICAL: Battery icon marker comment format
@@ -1113,10 +1157,18 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
         _wrap_with_condition(dst, indent, widget, content)
         return
 
-    # Image widget
-    if wtype == "image":
-        path = props.get("path", "").strip()
-        if not path:
+    # Graph widget
+    if wtype == "graph":
+        entity_id = (widget.entity_id or "").strip()
+        duration = props.get("duration", "24h")
+        border = bool(props.get("border", True))
+        grid = bool(props.get("grid", True))
+        color_prop = (props.get("color") or "black").lower()
+        
+        if not entity_id:
+            content.append(f'{indent}// widget:graph id:{widget.id} type:graph x:{x} y:{y} w:{w} h:{h} duration:"{duration}" border:{border} grid:{grid} color:{color_prop} (no entity)')
+            content.append(f'{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});')
+            content.append(f'{indent}it.line({x}, {y}+{h}, {x}+{w}, {y}, {fg});')
             # No path configured - show placeholder
             content.append(f'{indent}// widget:image id:{widget.id} type:image x:{x} y:{y} w:{w} h:{h}')
             content.append(f'{indent}// No image path configured')
@@ -1125,8 +1177,8 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
             return
         
         # Generate safe ID from path (same logic as in _generate_fonts)
-        safe_id = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
-        safe_id = f"img_{safe_id}"
+        safe_path = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
+        safe_id = f"img_{safe_path}_{w}x{h}"
         
         # Check if image should be inverted
         invert = bool(props.get("invert"))
@@ -1186,19 +1238,197 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
     if wtype == "image":
         image_id = props.get("image_id")
         if image_id:
+        content.append(f'{indent}  else if (level <= 30) icon = "\\U000F007C";  // battery-30')
+        content.append(f'{indent}  else if (level <= 40) icon = "\\U000F007D";  // battery-40')
+        content.append(f'{indent}  else if (level <= 50) icon = "\\U000F007E";  // battery-50')
+        content.append(f'{indent}  else if (level <= 60) icon = "\\U000F007F";  // battery-60')
+        content.append(f'{indent}  else if (level <= 70) icon = "\\U000F0080";  // battery-70')
+        content.append(f'{indent}  else if (level <= 80) icon = "\\U000F0081";  // battery-80')
+        content.append(f'{indent}  else if (level <= 90) icon = "\\U000F0082";  // battery-90')
+        content.append(f'{indent}  else                  icon = "\\U000F0079";  // battery (full)')
+        content.append(f'{indent}  it.printf({x}, {y}, id({font_id}), {fg}, "%s", icon);')
+        content.append(f'{indent}  // Show percentage below icon')
+        content.append(f'{indent}  it.printf({x}, {y}+{size}+2, id(font_small), {fg}, "%.0f%%", level);')
+        content.append(f'{indent}}}')
+        _wrap_with_condition(dst, indent, widget, content)
+        return
+
+    # Rectangle / filled rectangle
+    if wtype == "shape_rect":
+        fill = bool(props.get("fill"))
+        border_width = int(props.get("border_width", 1) or 1)
+        opacity = int(props.get("opacity", 100) or 100)
+        
+        # Add marker comment for parser
+        fill_str = "true" if fill else "false"
+        content.append(f'{indent}// widget:shape_rect id:{widget.id} type:shape_rect x:{x} y:{y} w:{w} h:{h} fill:{fill_str} border:{border_width} opacity:{opacity} color:{base_color}')
+        
+        # Check if we should use grey dithering pattern (50% checkerboard)
+        use_grey_pattern = (base_color == "gray" and fill)
+        
+        if fill:
+            if use_grey_pattern:
+                # Grey: create 50% checkerboard pattern for visual distinction from solid black
+                content.append(f"{indent}// Grey fill using 50% checkerboard dithering pattern")
+                content.append(f"{indent}for (int dy = 0; dy < {h}; dy++) {{")
+                content.append(f"{indent}  for (int dx = 0; dx < {w}; dx++) {{")
+                content.append(f"{indent}    if ((dx + dy) % 2 == 0) {{")
+                content.append(f"{indent}      it.draw_pixel_at({x}+dx, {y}+dy, COLOR_ON);")
+                content.append(f"{indent}    }}")
+                content.append(f"{indent}  }}")
+                content.append(f"{indent}}}")
+            else:
+                # Solid fill (black or white)
+                content.append(f"{indent}it.filled_rectangle({x}, {y}, {w}, {h}, {fg});")
+            if border_width > 1:
+                content.append(f"{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});")
+        else:
+            if border_width <= 1:
+                content.append(f"{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});")
+            else:
+                # Approximate thicker border using multiple rectangles.
+                content.append(f"{indent}// rectangle with border_width={border_width}")
+                content.append(f"{indent}for (int i = 0; i < {border_width}; i++) {{")
+                content.append(
+                    f"{indent}  it.rectangle({x}+i, {y}+i, {w}-2*i, {h}-2*i, {fg});"
+                )
+                content.append(f"{indent}}}")
+        _wrap_with_condition(dst, indent, widget, content)
+        return
+
+    # Circle / filled circle (use width/height box)
+    if wtype == "shape_circle":
+        r = max(1, min(w, h) // 2)
+        cx = x + w // 2
+        cy = y + h // 2
+        fill = bool(props.get("fill"))
+        border_width = int(props.get("border_width", 1) or 1)
+        opacity = int(props.get("opacity", 100) or 100)
+        
+        # Add marker comment for parser
+        fill_str = "true" if fill else "false"
+        content.append(f'{indent}// widget:shape_circle id:{widget.id} type:shape_circle x:{x} y:{y} w:{w} h:{h} fill:{fill_str} border:{border_width} opacity:{opacity} color:{base_color}')
+        
+        # Check if we should use grey dithering pattern
+        use_grey_pattern = (base_color == "gray" and fill)
+        
+        if fill:
+            if use_grey_pattern:
+                # Grey: create 50% checkerboard pattern within circle bounds
+                content.append(f"{indent}// Grey fill using 50% checkerboard dithering pattern")
+                content.append(f"{indent}for (int dy = -{r}; dy <= {r}; dy++) {{")
+                content.append(f"{indent}  for (int dx = -{r}; dx <= {r}; dx++) {{")
+                content.append(f"{indent}    if (dx*dx + dy*dy <= {r}*{r}) {{")
+                content.append(f"{indent}      if ((dx + dy) % 2 == 0) {{")
+                content.append(f"{indent}        it.draw_pixel_at({cx}+dx, {cy}+dy, COLOR_ON);")
+                content.append(f"{indent}      }}")
+                content.append(f"{indent}    }}")
+                content.append(f"{indent}  }}")
+                content.append(f"{indent}}}")
+            else:
+                # Solid fill (black or white)
+                content.append(f"{indent}it.filled_circle({cx}, {cy}, {r}, {fg});")
+            if border_width > 1:
+                content.append(f"{indent}it.circle({cx}, {cy}, {r}, {fg});")
+        else:
+            if border_width <= 1:
+                content.append(f"{indent}it.circle({cx}, {cy}, {r}, {fg});")
+            else:
+                content.append(f"{indent}// circle with border_width={border_width}")
+                content.append(f"{indent}for (int i = 0; i < {border_width}; i++) {{")
+                content.append(f"{indent}  it.circle({cx}, {cy}, {r}-i, {fg});")
+                content.append(f"{indent}}}")
+        _wrap_with_condition(dst, indent, widget, content)
+        return
+
+    # Line: from (x,y) to (x+width,y+height) using width/height as dx/dy
+    if wtype == "line":
+        dx = w
+        dy = h
+        stroke_width = int(props.get("stroke_width", 1) or 1)
+        # Add marker comment for parser
+        content.append(f'{indent}// widget:line id:{widget.id} type:line x:{x} y:{y} w:{w} h:{h} stroke:{stroke_width} color:{base_color}')
+        content.append(f"{indent}it.line({x}, {y}, {x}+{dx}, {y}+{dy}, {fg});")
+        _wrap_with_condition(dst, indent, widget, content)
+        return
+
+    # Graph widget
+    if wtype == "graph":
+        entity_id = (widget.entity_id or "").strip()
+        duration = props.get("duration", "24h")
+        border = bool(props.get("border", True))
+        grid = bool(props.get("grid", True))
+        color_prop = (props.get("color") or "black").lower()
+        
+        if not entity_id:
+            content.append(f'{indent}// widget:graph id:{widget.id} type:graph x:{x} y:{y} w:{w} h:{h} duration:"{duration}" border:{border} grid:{grid} color:{color_prop} (no entity)')
+            content.append(f'{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});')
+            content.append(f'{indent}it.line({x}, {y}+{h}, {x}+{w}, {y}, {fg});')
+            # No path configured - show placeholder
+            content.append(f'{indent}// widget:image id:{widget.id} type:image x:{x} y:{y} w:{w} h:{h}')
+            content.append(f'{indent}// No image path configured')
+            content.append(f'{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});')
+            _wrap_with_condition(dst, indent, widget, content)
+            return
+        
+        # Generate safe ID from path (same logic as in _generate_fonts)
+        safe_path = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
+        safe_id = f"img_{safe_path}_{w}x{h}"
+        
+        # Check if image should be inverted
+        invert = bool(props.get("invert"))
+        
+        # Add marker comment for parser
+        content.append(f'{indent}// widget:image id:{widget.id} type:image x:{x} y:{y} w:{w} h:{h} path:"{path}" invert:{invert}')
+        
+        if invert:
+            content.append(f'{indent}it.image({x}, {y}, id({safe_id}), COLOR_OFF, COLOR_ON);')
+        else:
+            content.append(f'{indent}it.image({x}, {y}, id({safe_id}));')
+        _wrap_with_condition(dst, indent, widget, content)
+        return
+
+    # Remote / online image (puppet) widget - rendered from online_image id
+    if wtype == "online_image":
+        props_url = (props.get("url") or "").strip()
+        safe_id = f"img_{widget.id}".replace("-", "_")
+        # Marker comment
+        content.append(f'{indent}// widget:online_image id:{widget.id} type:online_image x:{x} y:{y} w:{w} h:{h} url:"{props_url}"')
+        content.append(f'{indent}it.image({x}, {y}, id({safe_id}));')
+        _wrap_with_condition(dst, indent, widget, content)
+        return
+
+    # Fallback / unknown
+    if wtype == "image":
+        image_id = (props.get("image_id") or "").strip()
+        if image_id:
             dst.append(f"{indent}it.image({x}, {y}, id({image_id}));")
         else:
-            dst.append(f"{indent}// image widget without image_id; nothing drawn")
+            dst.append(f"{indent}// image widget missing image_id at ({x},{y})")
         return
 
-    # History graph widget (placeholder: renders a labeled box)
+    # History widget: placeholder visualization; requires precomputed entity
     if wtype == "history":
-        title = (widget.title or "history").replace('"', '\\"')
+        entity_id = (props.get("entity_id") or widget.entity_id or "").replace('"', '\\"')
+        style = (props.get("style") or "bars").lower()
+        label = entity_id or "history"
         font = _resolve_font(props)
-        dst.append(f"{indent}// History widget placeholder for {title}")
-        dst.append(f"{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});")
-        dst.append(f"{indent}it.print({x}+2, {y}+2, {font}, {fg}, \"{title}\");")
+        content.append(f"{indent}// history widget for {entity_id}; expects external aggregation")
+        content.append(f'{indent}it.print({x}, {y}, {font}, {fg}, "{label}");')
+        # Simple placeholder box/lines
+        hx = x
+        hy = y + 14
+        hw = max(10, w)
+        hh = max(6, h - 16)
+        content.append(f"{indent}it.rectangle({hx}, {hy}, {hw}, {hh}, {fg});")
+        if style == "line":
+            content.append(f"{indent}it.line({hx+2}, {hy+hh-3}, {hx+hw-2}, {hy+3}, {fg});")
+        else:
+            content.append(f"{indent}// draw simple bar-style segments as placeholder")
+        _wrap_with_condition(dst, indent, widget, content)
         return
 
+    # Unknown type: emit comment for safety
+    dst.append(f'{indent}// TODO: unsupported widget type "{widget.type}" at ({x},{y})')
     # Fallback
     dst.append(f'{indent}// Unsupported widget type "{widget.type}" at ({x},{y},{w},{h})')

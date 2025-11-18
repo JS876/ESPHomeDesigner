@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>reTerminal Dashboard Designer · YAML Snippet Editor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <!-- Google Fonts for text preview -->
+
+  <!-- Google Fonts for live preview -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;500;700&family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&family=Inter:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Raleway:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Work+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&family=Quicksand:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+
   <style>
     :root {
       --bg: #0f1115;
@@ -125,7 +128,7 @@
     .input:focus,
     textarea:focus {
       border-color: var(--accent);
-      box-shadow:  0 0 0 1px var(--accent-soft);
+      box-shadow: 0 0 0 1px var(--accent-soft);
     }
 
     .sidebar-group {
@@ -640,10 +643,12 @@
         max-height: 65vh;
         min-height: 250px;
       }
+
       .snippet-area {
         max-height: 30vh;
         min-height: 150px;
       }
+
       .canvas.portrait {
         transform: scale(0.7);
         transform-origin: top center;
@@ -655,6 +660,7 @@
         max-height: 60vh;
         min-height: 200px;
       }
+
       .snippet-area {
         max-height: 25vh;
         min-height: 120px;
@@ -665,6 +671,7 @@
       .canvas-area {
         max-width: 750px;
       }
+
       .snippet-area {
         width: 750px;
         max-width: 750px;
@@ -676,13 +683,16 @@
         transform: scale(0.8);
         transform-origin: top center;
       }
+
       .canvas.portrait {
         transform: scale(0.6);
         transform-origin: top center;
       }
+
       .canvas-area {
         max-width: 650px;
       }
+
       .snippet-area {
         width: 650px;
         max-width: 650px;
@@ -693,6 +703,7 @@
       .canvas-area {
         max-width: 550px;
       }
+
       .snippet-area {
         width: 550px;
         max-width: 550px;
@@ -704,7 +715,7 @@
       body {
         flex-direction: column;
       }
-      
+
       .sidebar {
         width: 100%;
         height: 120px;
@@ -714,23 +725,23 @@
         border-right: none;
         border-bottom: 1px solid var(--border-subtle);
       }
-      
+
       .canvas-wrap {
         flex-direction: column;
       }
-      
+
       .right-panel {
         width: 100%;
         height: 150px;
         overflow-x: auto;
         overflow-y: hidden;
       }
-      
+
       .canvas-area {
         min-height: 180px;
         max-height: 50vh;
       }
-      
+
       .snippet-area {
         min-height: 150px;
         max-height: 30vh;
@@ -738,6 +749,7 @@
     }
   </style>
 </head>
+
 <body>
   <aside class="sidebar">
     <div>
@@ -767,7 +779,8 @@
       <div class="sidebar-section-label">Pages</div>
       <div id="pageList" class="page-list"></div>
       <button id="addPageBtn" class="btn btn-secondary btn-full">+ Add page</button>
-      <button id="clearAllBtn" class="btn btn-secondary btn-full" style="margin-top:4px;" title="Remove all widgets from current page">Clear current page</button>
+      <button id="clearAllBtn" class="btn btn-secondary btn-full" style="margin-top:4px;"
+        title="Remove all widgets from current page">Clear current page</button>
     </div>
 
     <div class="sidebar-group">
@@ -817,6 +830,10 @@
           <span class="label">Puppet / Remote image</span>
           <span class="tag">Remote</span>
         </div>
+        <div class="item" data-widget-type="graph">
+          <span class="label">Graph / Chart</span>
+          <span class="tag">Data</span>
+        </div>
       </div>
     </div>
 
@@ -840,7 +857,8 @@
         <div class="main-header-pill">
           Canvas: <span id="canvasSizeLabel">800 x 480</span> px · reTerminal E-Ink
         </div>
-        <select id="orientationSelect" class="select" style="width:auto;padding:3px 6px;font-size:9px;" title="Canvas orientation">
+        <select id="orientationSelect" class="select" style="width:auto;padding:3px 6px;font-size:9px;"
+          title="Canvas orientation">
           <option value="landscape">Landscape 800x480</option>
           <option value="portrait">Portrait 480x800</option>
         </select>
@@ -864,9 +882,12 @@
             <div class="snippet-header">
               <span>ESPHome YAML Configuration (editable - paste or modify, then click Update Layout)</span>
               <div class="snippet-actions">
-                <button id="copySnippetBtn" class="btn btn-secondary" style="padding:3px 6px;font-size:9px;">Copy</button>
-                <button id="fullscreenSnippetBtn" class="btn btn-secondary" style="padding:3px 6px;font-size:9px;">Fullscreen</button>
-                <button id="updateLayoutBtn" class="btn btn-primary" style="padding:3px 8px;font-size:9px;font-weight:bold;">Update Layout from YAML</button>
+                <button id="copySnippetBtn" class="btn btn-secondary"
+                  style="padding:3px 6px;font-size:9px;">Copy</button>
+                <button id="fullscreenSnippetBtn" class="btn btn-secondary"
+                  style="padding:3px 6px;font-size:9px;">Fullscreen</button>
+                <button id="updateLayoutBtn" class="btn btn-primary"
+                  style="padding:3px 8px;font-size:9px;font-weight:bold;">Update Layout from YAML</button>
               </div>
             </div>
             <textarea id="snippetBox" class="snippet-box"># Click "Generate ESPHome snippet" to see output here.
@@ -984,7 +1005,8 @@
         </div>
         <div class="field">
           <div class="prop-label">Refresh Interval (seconds)</div>
-          <input id="pageSettingsRefresh" class="prop-input" type="number" min="0" step="1" placeholder="Auto (uses ESPHome default)" />
+          <input id="pageSettingsRefresh" class="prop-input" type="number" min="0" step="1"
+            placeholder="Auto (uses ESPHome default)" />
           <div style="font-size: 9px; color: var(--muted); margin-top: 2px;">
             Leave empty for default. Set to 0 for manual refresh only. Recommended: 60-300 seconds.
           </div>
@@ -1243,9 +1265,12 @@
             } else if (p.type === "text" || p.type === "label") {
               widget.props = {
                 text: p.text || "",
-                font_size: parseInt(p.font_size || 12, 10),
-                color: p.color || "black",
-                font_style: p.font_style || "regular"
+                font_size: parseInt(p.size || p.font_size || 20, 10),
+                font_family: p.font || "Roboto",
+                font_weight: parseInt(p.weight || p.font_weight || 400, 10),
+                italic: (p.italic === "true" || p.italic === true),
+                bpp: parseInt(p.bpp || 1, 10),
+                color: p.color || "black"
               };
             } else if (p.type === "sensor_text") {
               widget.props = {
@@ -1306,6 +1331,23 @@
               widget.props = {
                 stroke_width: parseInt(p.stroke || 1, 10),
                 color: p.color || "black"
+              };
+            } else if (p.type === "graph") {
+              widget.entity_id = p.entity || "";
+              widget.props = {
+                duration: p.duration || "1h",
+                border: (p.border === "true" || p.border === "1" || p.border == null),
+                grid: (p.grid === "true" || p.grid === "1" || p.grid == null),
+                color: p.color || "black",
+                x_grid: p.x_grid || "",
+                y_grid: p.y_grid || "",
+                line_thickness: parseInt(p.line_thickness || 3, 10),
+                line_type: p.line_type || "SOLID",
+                continuous: (p.continuous === "true" || p.continuous === "1"),
+                min_value: p.min_value || "",
+                max_value: p.max_value || "",
+                min_range: p.min_range || "",
+                max_range: p.max_range || ""
               };
             }
 
@@ -1434,28 +1476,28 @@
     function applyImportedLayout(layout) {
       console.log("=== applyImportedLayout called ===");
       console.log("Layout:", JSON.stringify(layout, null, 2));
-      
+
       if (!layout || !Array.isArray(layout.pages)) {
         console.error("Invalid layout - missing pages array");
         throw new Error("invalid_layout");
       }
-      
+
       console.log("Pages before mapping:", layout.pages.length);
       layout.pages.forEach((p, i) => {
         console.log(`Page ${i}: ${p.widgets ? p.widgets.length : 0} widgets`);
       });
-      
+
       pages = layout.pages.map((p, idx) => ({
         id: p.id || `page_${idx}`,
         name: p.name || `Page ${idx + 1}`,
         widgets: Array.isArray(p.widgets) ? p.widgets : []
       }));
-      
+
       console.log("Pages after mapping:", pages.length);
       pages.forEach((p, i) => {
         console.log(`Mapped page ${i}: ${p.widgets.length} widgets`, p.widgets.map(w => w.id));
       });
-      
+
       if (!pages.length) {
         console.warn("No pages, creating default empty page");
         pages = [
@@ -1471,7 +1513,7 @@
       if (settings.sleep_enabled === undefined) settings.sleep_enabled = false;
       if (settings.sleep_start_hour === undefined) settings.sleep_start_hour = 0;
       if (settings.sleep_end_hour === undefined) settings.sleep_end_hour = 5;
-      
+
       currentPageIndex = 0;
       rebuildWidgetsIndex();
       applyOrientation(settings.orientation || "landscape");
@@ -1585,7 +1627,7 @@
         console.log("=== Update Layout from YAML clicked ===");
         console.log("YAML length:", yaml.length);
         console.log("YAML first 200 chars:", yaml.substring(0, 200));
-        
+
         if (!yaml.trim()) {
           sidebarStatus.innerHTML = '<span style="color: var(--danger);">YAML is empty. Generate snippet first or paste YAML.</span>';
           return;
@@ -1724,7 +1766,7 @@
       pages.forEach((page, index) => {
         const item = document.createElement("div");
         item.className = "item" + (index === currentPageIndex ? " active" : "");
-        
+
         item.onclick = () => {
           currentPageIndex = index;
           selectedWidgetId = null;
@@ -1733,7 +1775,7 @@
           renderPropertiesPanel();
           scheduleSnippetUpdate();
         };
-        
+
         const label = document.createElement("span");
         label.className = "label";
         label.textContent = page.name;
@@ -1742,12 +1784,12 @@
         tag.textContent = page.id;
         item.appendChild(label);
         item.appendChild(tag);
-        
+
         const actionsContainer = document.createElement("div");
         actionsContainer.style.display = "flex";
         actionsContainer.style.gap = "2px";
         actionsContainer.style.marginLeft = "auto";
-        
+
         const editBtn = document.createElement("button");
         editBtn.textContent = "⚙";
         editBtn.className = "btn btn-secondary";
@@ -1759,7 +1801,7 @@
           openPageSettingsModal(page);
         };
         actionsContainer.appendChild(editBtn);
-        
+
         if (pages.length > 1) {
           const deleteBtn = document.createElement("button");
           deleteBtn.textContent = "🗑";
@@ -1776,9 +1818,9 @@
           };
           actionsContainer.appendChild(deleteBtn);
         }
-        
+
         item.appendChild(actionsContainer);
-        
+
         pageListEl.appendChild(item);
       });
       const page = getCurrentPage();
@@ -1805,13 +1847,22 @@
         widget.type = "text";
         widget.props.text = "Text";
         widget.props.font_size = 20;
+        widget.props.font_family = "Roboto";
         widget.props.color = "black";
+        widget.props.font_weight = 400;  // Regular
+        widget.props.italic = false;
+        widget.props.bpp = 1;  // No anti-aliasing by default
       } else if (type === "sensor_text") {
         widget.type = "sensor_text";
         widget.props.label_font_size = 14;
         widget.props.value_font_size = 20;
         widget.props.value_format = "label_value";
         widget.props.color = "black";
+        widget.props.font_style = "regular";
+        widget.props.font_weight = 400;  // Regular
+        widget.props.italic = false;
+        widget.props.unit = "";
+        widget.props.precision = -1;
         widget.entity_id = "";
         widget.title = "";
       } else if (type === "datetime") {
@@ -1840,6 +1891,11 @@
         widget.entity_id = "";
         widget.props.size = 48;
         widget.props.color = "black";
+      } else if (type === "puppet") {
+        widget.type = "puppet";
+        widget.props.image_url = "";
+        widget.props.image_type = "RGB565";  // ESPHome default for color displays
+        widget.props.transparency = "opaque";  // No transparency by default
       } else if (type === "shape_rect") {
         widget.type = "shape_rect";
         widget.props.fill = false;
@@ -1881,6 +1937,24 @@
         widget.height = 480;
         widget.props.url = "";
         widget.props.interval_s = 300;
+      } else if (type === "graph") {
+        widget.type = "graph";
+        widget.width = 200;
+        widget.height = 100;
+        widget.entity_id = "";
+        widget.props.duration = "1h";
+        widget.props.border = true;
+        widget.props.grid = true;
+        widget.props.color = "black";
+        widget.props.x_grid = "";  // e.g., "10min"
+        widget.props.y_grid = "";  // e.g., "1.0"
+        widget.props.line_thickness = 3;
+        widget.props.line_type = "SOLID";  // SOLID, DOTTED, DASHED
+        widget.props.continuous = false;
+        widget.props.min_value = "";
+        widget.props.max_value = "";
+        widget.props.min_range = "";
+        widget.props.max_range = "";
       }
 
       page.widgets.push(widget);
@@ -2059,8 +2133,8 @@
             color === "white"
               ? "#ffffff"
               : color === "gray"
-              ? "#aaaaaa"
-              : "#000000";
+                ? "#aaaaaa"
+                : "#000000";
 
           const fit = !!props.fit_icon_to_frame;
           el.classList.add("mdi-icon-preview");
@@ -2098,8 +2172,8 @@
             color === "white"
               ? "#ffffff"
               : color === "gray"
-              ? "#aaaaaa"
-              : "#000000";
+                ? "#aaaaaa"
+                : "#000000";
 
           if (type === "shape_rect") {
             el.style.boxSizing = "border-box";
@@ -2121,7 +2195,7 @@
         } else if (type === "image") {
           const path = props.path || "";
           const invert = !!props.invert;
-          
+
           el.style.boxSizing = "border-box";
           el.style.border = "2px dashed #aaaaaa";
           el.style.backgroundColor = "#f5f5f5";
@@ -2129,31 +2203,31 @@
           el.style.alignItems = "center";
           el.style.justifyContent = "center";
           el.style.overflow = "hidden";
-          
+
           if (path) {
             const filename = path.split("/").pop();
-            
+
             el.innerHTML = "";
-            
+
             const img = document.createElement("img");
             img.style.maxWidth = "100%";
             img.style.maxHeight = "100%";
             img.style.objectFit = "contain";
             img.draggable = false;
-            
+
             if (invert) {
               img.style.filter = "invert(1)";
             }
-            
+
             img.onerror = () => {
               el.innerHTML = "<div style='text-align:center;color:#666;font-size:11px;padding:8px;line-height:1.4;'>" +
                 "🖼️<br/><strong>" + filename + "</strong><br/>" +
-                "<span style='color:#999;font-size:9px;'>" + 
-                (invert ? "(inverted) " : "") + 
+                "<span style='color:#999;font-size:9px;'>" +
+                (invert ? "(inverted) " : "") +
                 widget.width + "×" + widget.height + "px<br/>" +
                 "File not found or not accessible</span></div>";
             };
-            
+
             img.onload = () => {
               const overlay = document.createElement("div");
               overlay.style.position = "absolute";
@@ -2168,7 +2242,7 @@
               el.style.position = "relative";
               el.appendChild(overlay);
             };
-            
+
             const proxyUrl = "/api/reterminal_dashboard/image_proxy?path=" + encodeURIComponent(path);
             img.src = proxyUrl;
             el.appendChild(img);
@@ -2189,19 +2263,19 @@
             color === "white"
               ? "#ffffff"
               : color === "gray"
-              ? "#aaaaaa"
-              : "#000000";
-          
+                ? "#aaaaaa"
+                : "#000000";
+
           const now = new Date();
           const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
           const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-          
+
           el.style.display = "flex";
           el.style.flexDirection = "column";
           el.style.justifyContent = "center";
           el.style.alignItems = "center";
           el.style.color = colorStyle;
-          
+
           if (format === "time_only") {
             const timeEl = document.createElement("div");
             timeEl.style.fontSize = timeFontSize + "px";
@@ -2225,6 +2299,14 @@
             el.appendChild(timeEl);
             el.appendChild(dateEl);
           }
+        } else if (type === "puppet") {
+          const puppetText = document.createElement("div");
+          puppetText.style.color = "white";
+          puppetText.style.fontSize = "10px";
+          puppetText.style.wordBreak = "break-all";
+          puppetText.style.padding = "4px";
+          puppetText.textContent = props.image_url || "(no image URL)";
+          el.appendChild(puppetText);
         } else if (type === "progress_bar") {
           const entityId = widget.entity_id || "";
           const label = widget.title || "";
@@ -2237,9 +2319,9 @@
             color === "white"
               ? "#ffffff"
               : color === "gray"
-              ? "#aaaaaa"
-              : "#000000";
-          
+                ? "#aaaaaa"
+                : "#000000";
+
           let progress = 50;
           if (hasHaBackend() && entityId) {
             const state = getEntityState(entityId);
@@ -2250,13 +2332,13 @@
               }
             }
           }
-          
+
           el.style.display = "flex";
           el.style.flexDirection = "column";
           el.style.justifyContent = "center";
           el.style.gap = "4px";
           el.style.color = colorStyle;
-          
+
           if (showLabel && (label || showPercentage)) {
             const labelRow = document.createElement("div");
             labelRow.style.display = "flex";
@@ -2264,22 +2346,22 @@
             labelRow.style.alignItems = "center";
             labelRow.style.fontSize = "12px";
             labelRow.style.paddingBottom = "2px";
-            
+
             if (label) {
               const labelSpan = document.createElement("span");
               labelSpan.textContent = label;
               labelRow.appendChild(labelSpan);
             }
-            
+
             if (showPercentage) {
               const pctSpan = document.createElement("span");
               pctSpan.textContent = Math.round(progress) + "%";
               labelRow.appendChild(pctSpan);
             }
-            
+
             el.appendChild(labelRow);
           }
-          
+
           const barContainer = document.createElement("div");
           barContainer.style.width = "100%";
           barContainer.style.height = barHeight + "px";
@@ -2288,13 +2370,13 @@
           barContainer.style.position = "relative";
           barContainer.style.overflow = "hidden";
           barContainer.style.backgroundColor = color === "white" ? "#000" : "#fff";
-          
+
           const barFill = document.createElement("div");
           barFill.style.width = progress + "%";
           barFill.style.height = "100%";
           barFill.style.backgroundColor = colorStyle;
           barFill.style.transition = "width 0.3s ease";
-          
+
           barContainer.appendChild(barFill);
           el.appendChild(barContainer);
         } else if (type === "battery_icon") {
@@ -2305,9 +2387,9 @@
             color === "white"
               ? "#ffffff"
               : color === "gray"
-              ? "#aaaaaa"
-              : "#000000";
-          
+                ? "#aaaaaa"
+                : "#000000";
+
           let batteryLevel = 75;
           if (hasHaBackend() && entityId) {
             const state = getEntityState(entityId);
@@ -2318,7 +2400,7 @@
               }
             }
           }
-          
+
           let iconCode = "F0079";
           if (batteryLevel <= 10) iconCode = "F007A";
           else if (batteryLevel <= 20) iconCode = "F007B";
@@ -2329,10 +2411,10 @@
           else if (batteryLevel <= 70) iconCode = "F0080";
           else if (batteryLevel <= 80) iconCode = "F0081";
           else if (batteryLevel <= 90) iconCode = "F0082";
-          
+
           const cp = 0xf0000 + parseInt(iconCode.slice(1), 16);
           const ch = String.fromCodePoint(cp);
-          
+
           el.classList.add("mdi-icon-preview");
           el.style.fontFamily = "MDI, system-ui, -apple-system, BlinkMacSystemFont, -sans-serif";
           el.style.lineHeight = "1";
@@ -2343,12 +2425,114 @@
           el.style.justifyContent = "center";
           el.style.fontSize = size + "px";
           el.textContent = ch;
-          
+
           const pctLabel = document.createElement("div");
           pctLabel.style.fontSize = "10px";
           pctLabel.style.marginTop = "2px";
           pctLabel.textContent = Math.round(batteryLevel) + "%";
           el.appendChild(pctLabel);
+        } else if (type === "graph") {
+          const entityId = widget.entity_id || "";
+          const borderEnabled = props.border !== false;
+          const gridEnabled = props.grid !== false;
+          const color = props.color || "black";
+          const colorStyle =
+            color === "white"
+              ? "#ffffff"
+              : color === "gray"
+                ? "#aaaaaa"
+                : "#000000";
+
+          el.style.boxSizing = "border-box";
+          el.style.backgroundColor = "#ffffff";
+          el.style.position = "relative";
+          el.style.overflow = "hidden";
+
+          if (borderEnabled) {
+            el.style.border = "2px solid " + colorStyle;
+          }
+
+          // Create SVG for the graph
+          const svgNS = "http://www.w3.org/2000/svg";
+          const svg = document.createElementNS(svgNS, "svg");
+          svg.setAttribute("width", "100%");
+          svg.setAttribute("height", "100%");
+          svg.style.display = "block";
+
+          // Add grid if enabled
+          if (gridEnabled) {
+            const gridGroup = document.createElementNS(svgNS, "g");
+            gridGroup.setAttribute("stroke", "#e0e0e0");
+            gridGroup.setAttribute("stroke-width", "1");
+
+            // Vertical grid lines (5 lines)
+            for (let i = 0; i <= 4; i++) {
+              const line = document.createElementNS(svgNS, "line");
+              const x = (i * 25) + "%";
+              line.setAttribute("x1", x);
+              line.setAttribute("y1", "0");
+              line.setAttribute("x2", x);
+              line.setAttribute("y2", "100%");
+              gridGroup.appendChild(line);
+            }
+
+            // Horizontal grid lines (3 lines)
+            for (let i = 0; i <= 2; i++) {
+              const line = document.createElementNS(svgNS, "line");
+              const y = (i * 50) + "%";
+              line.setAttribute("x1", "0");
+              line.setAttribute("y1", y);
+              line.setAttribute("x2", "100%");
+              line.setAttribute("y2", y);
+              gridGroup.appendChild(line);
+            }
+
+            svg.appendChild(gridGroup);
+          }
+
+          // Generate sample data points for preview
+          const sampleData = [
+            0.3, 0.5, 0.7, 0.8, 0.65, 0.9, 0.4, 0.2, 0.35, 0.6, 0.75, 0.55
+          ];
+
+          const width = widget.width || 200;
+          const height = widget.height || 100;
+          const padding = 4;
+          const graphWidth = width - (padding * 2);
+          const graphHeight = height - (padding * 2);
+
+          // Create polyline for the graph
+          const polyline = document.createElementNS(svgNS, "polyline");
+          const points = sampleData.map((val, idx) => {
+            const x = padding + (idx / (sampleData.length - 1)) * graphWidth;
+            const y = padding + (1 - val) * graphHeight;
+            return `${x},${y}`;
+          }).join(" ");
+
+          polyline.setAttribute("points", points);
+          polyline.setAttribute("fill", "none");
+          polyline.setAttribute("stroke", colorStyle);
+          polyline.setAttribute("stroke-width", "2");
+          polyline.setAttribute("stroke-linejoin", "round");
+
+          svg.appendChild(polyline);
+          el.appendChild(svg);
+
+          // Add label if no entity selected
+          if (!entityId) {
+            const label = document.createElement("div");
+            label.style.position = "absolute";
+            label.style.top = "50%";
+            label.style.left = "50%";
+            label.style.transform = "translate(-50%, -50%)";
+            label.style.fontSize = "10px";
+            label.style.color = "#999";
+            label.style.backgroundColor = "rgba(255,255,255,0.8)";
+            label.style.padding = "2px 6px";
+            label.style.borderRadius = "3px";
+            label.textContent = "graph (No Entity)";
+            el.appendChild(label);
+          }
         } else {
           const color = props.color || "black";
           const opacityVal = parseInt(props.opacity != null ? props.opacity : 100, 10);
@@ -2358,8 +2542,8 @@
             color === "white"
               ? "#ffffff"
               : color === "gray"
-              ? "#aaaaaa"
-              : "#000000";
+                ? "#aaaaaa"
+                : "#000000";
 
           if (type === "sensor_text") {
             const entityId = widget.entity_id || "";
@@ -2368,67 +2552,71 @@
             const labelFontSize = props.label_font_size || 14;
             const valueFontSize = props.value_font_size || 20;
             const fontFamily = props.font_family || "Inter";
-            
+
             let displayValue = "23.5°C";
-            
+
             if (hasHaBackend() && entityId) {
               const state = getEntityState(entityId);
               console.log(`[Canvas] Rendering sensor_text: entity=${entityId}, state=${state}, label=${label}, format=${valueFormat}`);
-              
+
               if (state !== null && state !== undefined) {
                 displayValue = String(state);
               } else {
                 displayValue = "Loading...";
               }
             }
-            
+
             const body = document.createElement("div");
             body.style.color = colorStyle;
             body.style.opacity = opacity;
             body.style.fontFamily = fontFamily + ", sans-serif";
-            
+
             if (valueFormat === "label_value" && label) {
               body.style.display = "flex";
               body.style.alignItems = "baseline";
               body.style.gap = "4px";
-              
+
               const labelSpan = document.createElement("span");
               labelSpan.style.fontSize = labelFontSize + "px";
               labelSpan.textContent = label + ":";
-              
+
               const valueSpan = document.createElement("span");
               valueSpan.style.fontSize = valueFontSize + "px";
               valueSpan.textContent = displayValue;
-              
+
               body.appendChild(labelSpan);
               body.appendChild(valueSpan);
             } else if (valueFormat === "label_newline_value" && label) {
               body.style.display = "flex";
               body.style.flexDirection = "column";
               body.style.gap = "2px";
-              
+
               const labelDiv = document.createElement("div");
               labelDiv.style.fontSize = labelFontSize + "px";
               labelDiv.textContent = label;
-              
+
               const valueDiv = document.createElement("div");
               valueDiv.style.fontSize = valueFontSize + "px";
               valueDiv.textContent = displayValue;
-              
+
               body.appendChild(labelDiv);
               body.appendChild(valueDiv);
             } else {
               body.style.fontSize = valueFontSize + "px";
               body.textContent = displayValue;
             }
-            
+
             el.appendChild(body);
           } else {
             const fontSize = props.font_size || 16;
             const fontFamily = props.font_family || "Inter";
+            const fontWeight = props.font_weight || 400;
+            const fontStyle = props.italic ? "italic" : "normal";
             const body = document.createElement("div");
             body.style.fontSize = fontSize + "px";
             body.style.fontFamily = fontFamily + ", sans-serif";
+            body.style.fontWeight = String(fontWeight);
+            body.style.fontStyle = fontStyle;
             body.style.color = colorStyle;
             body.style.opacity = opacity;
             body.textContent = props.text || widget.title || "Text";
@@ -2443,6 +2631,49 @@
         el.addEventListener("mousedown", (ev) => onWidgetMouseDown(ev, widget.id));
         canvas.appendChild(el);
       }
+    }
+
+    // Layer ordering functions
+    function moveWidgetToFront(widgetId) {
+      const page = getCurrentPage();
+      if (!page) return;
+      const index = page.widgets.findIndex(w => w.id === widgetId);
+      if (index === -1 || index === page.widgets.length - 1) return;
+      const widget = page.widgets.splice(index, 1)[0];
+      page.widgets.push(widget);
+      renderCanvas();
+      scheduleSnippetUpdate();
+    }
+
+    function moveWidgetToBack(widgetId) {
+      const page = getCurrentPage();
+      if (!page) return;
+      const index = page.widgets.findIndex(w => w.id === widgetId);
+      if (index === -1 || index === 0) return;
+      const widget = page.widgets.splice(index, 1)[0];
+      page.widgets.unshift(widget);
+      renderCanvas();
+      scheduleSnippetUpdate();
+    }
+
+    function moveWidgetForward(widgetId) {
+      const page = getCurrentPage();
+      if (!page) return;
+      const index = page.widgets.findIndex(w => w.id === widgetId);
+      if (index === -1 || index === page.widgets.length - 1) return;
+      [page.widgets[index], page.widgets[index + 1]] = [page.widgets[index + 1], page.widgets[index]];
+      renderCanvas();
+      scheduleSnippetUpdate();
+    }
+
+    function moveWidgetBackward(widgetId) {
+      const page = getCurrentPage();
+      if (!page) return;
+      const index = page.widgets.findIndex(w => w.id === widgetId);
+      if (index === -1 || index === 0) return;
+      [page.widgets[index], page.widgets[index - 1]] = [page.widgets[index - 1], page.widgets[index]];
+      renderCanvas();
+      scheduleSnippetUpdate();
     }
 
     function renderPropertiesPanel() {
@@ -2512,9 +2743,81 @@
         renderCanvas();
       });
       addLabeledInput("Position Y", "number", widget.y, (v) => {
-        widget.y = parseInt(v || "0", 10) || 0;
+        widget.y = Math.max(0, Math.min(CANVAS_HEIGHT, parseInt(v || "0", 10) || 0));
         renderCanvas();
       });
+
+      // Layer ordering buttons
+      const layerWrap = document.createElement("div");
+      layerWrap.className = "field";
+      layerWrap.style.marginTop = "8px";
+
+      const layerLbl = document.createElement("div");
+      layerLbl.className = "prop-label";
+      layerLbl.textContent = "Layer Order";
+      layerWrap.appendChild(layerLbl);
+
+      const layerBtns = document.createElement("div");
+      layerBtns.style.display = "grid";
+      layerBtns.style.gridTemplateColumns = "1fr 1fr";
+      layerBtns.style.gap = "4px";
+      layerBtns.style.marginTop = "4px";
+
+      const btnToFront = document.createElement("button");
+      btnToFront.className = "btn btn-secondary";
+      btnToFront.textContent = "⬆️ To Front";
+      btnToFront.type = "button";
+      btnToFront.title = "Bring to front (top layer)";
+      btnToFront.style.fontSize = "9px";
+      btnToFront.style.padding = "4px 6px";
+      btnToFront.addEventListener("click", () => {
+        moveWidgetToFront(widget.id);
+        renderPropertiesPanel();
+      });
+
+      const btnToBack = document.createElement("button");
+      btnToBack.className = "btn btn-secondary";
+      btnToBack.textContent = "⬇️ To Back";
+      btnToBack.type = "button";
+      btnToBack.title = "Send to back (bottom layer)";
+      btnToBack.style.fontSize = "9px";
+      btnToBack.style.padding = "4px 6px";
+      btnToBack.addEventListener("click", () => {
+        moveWidgetToBack(widget.id);
+        renderPropertiesPanel();
+      });
+
+      const btnForward = document.createElement("button");
+      btnForward.className = "btn btn-secondary";
+      btnForward.textContent = "↑ Forward";
+      btnForward.type = "button";
+      btnForward.title = "Move forward one layer";
+      btnForward.style.fontSize = "9px";
+      btnForward.style.padding = "4px 6px";
+      btnForward.addEventListener("click", () => {
+        moveWidgetForward(widget.id);
+        renderPropertiesPanel();
+      });
+
+      const btnBackward = document.createElement("button");
+      btnBackward.className = "btn btn-secondary";
+      btnBackward.textContent = "↓ Backward";
+      btnBackward.type = "button";
+      btnBackward.title = "Move backward one layer";
+      btnBackward.style.fontSize = "9px";
+      btnBackward.style.padding = "4px 6px";
+      btnBackward.addEventListener("click", () => {
+        moveWidgetBackward(widget.id);
+        renderPropertiesPanel();
+      });
+
+      layerBtns.appendChild(btnToFront);
+      layerBtns.appendChild(btnToBack);
+      layerBtns.appendChild(btnForward);
+      layerBtns.appendChild(btnBackward);
+
+      layerWrap.appendChild(layerBtns);
+      panel.appendChild(layerWrap);
 
       if (type === "line") {
         addLabeledInput("dx (line width)", "number", widget.width, (v) => {
@@ -2929,19 +3232,19 @@
         const iconPickerLbl = document.createElement("div");
         iconPickerLbl.className = "prop-label";
         iconPickerLbl.textContent = "Quick icon picker (visual preview)";
-        
+
         const iconPickerSelect = document.createElement("select");
         iconPickerSelect.className = "select";
         iconPickerSelect.style.fontFamily = "MDI, monospace, system-ui";
         iconPickerSelect.style.fontSize = "16px";
         iconPickerSelect.style.lineHeight = "1.5";
-        
+
         const placeholderOpt = document.createElement("option");
         placeholderOpt.value = "";
         placeholderOpt.textContent = "-- Select icon --";
         placeholderOpt.style.fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
         iconPickerSelect.appendChild(placeholderOpt);
-        
+
         iconPickerData.forEach(icon => {
           const opt = document.createElement("option");
           opt.value = icon.code;
@@ -2951,13 +3254,13 @@
           opt.style.fontFamily = "MDI, monospace, system-ui";
           iconPickerSelect.appendChild(opt);
         });
-        
+
         const currentCode = (widget.props.code || "F0595").toUpperCase();
         const matchingIcon = iconPickerData.find(i => i.code === currentCode);
         if (matchingIcon) {
           iconPickerSelect.value = matchingIcon.code;
         }
-        
+
         iconPickerSelect.addEventListener("change", () => {
           const selectedCode = iconPickerSelect.value;
           if (selectedCode) {
@@ -2967,7 +3270,7 @@
             scheduleSnippetUpdate();
           }
         });
-        
+
         iconPickerWrap.appendChild(iconPickerLbl);
         iconPickerWrap.appendChild(iconPickerSelect);
         panel.appendChild(iconPickerWrap);
@@ -3018,6 +3321,286 @@
         });
       }
 
+      if (type === "datetime") {
+        addSelect(
+          "Display format",
+          widget.props.format || "time_date",
+          ["time_date", "time_only", "date_only"],
+          (val) => {
+            widget.props.format = val;
+            renderCanvas();
+            scheduleSnippetUpdate();
+          }
+        );
+
+        addLabeledInput("Time font size", "number", widget.props.time_font_size || 28, (v) => {
+          widget.props.time_font_size = parseInt(v || "28", 10) || 28;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+
+        addLabeledInput("Date font size", "number", widget.props.date_font_size || 16, (v) => {
+          widget.props.date_font_size = parseInt(v || "16", 10) || 16;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+
+        addSelect("Color", widget.props.color || "black", ["black", "white", "gray"], (val) => {
+          widget.props.color = val;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+      }
+
+      if (type === "progress_bar") {
+        const entityWrap = document.createElement("div");
+        entityWrap.className = "field";
+        const entityLbl = document.createElement("div");
+        entityLbl.className = "prop-label";
+        entityLbl.textContent = "Entity ID (numeric sensor)";
+
+        const entityRow = document.createElement("div");
+        entityRow.style.display = "flex";
+        entityRow.style.gap = "4px";
+
+        const entityInput = document.createElement("input");
+        entityInput.className = "prop-input";
+        entityInput.type = "text";
+        entityInput.value = widget.entity_id || "";
+        entityInput.style.flex = "1";
+        entityInput.addEventListener("input", () => {
+          widget.entity_id = entityInput.value;
+          if (hasHaBackend() && Object.keys(entityStatesCache).length === 0) {
+            fetchEntityStates();
+          }
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+
+        const pickerBtn = document.createElement("button");
+        pickerBtn.className = "btn btn-secondary";
+        pickerBtn.textContent = "⋮⋮⋮";
+        pickerBtn.style.padding = "5px 8px";
+        pickerBtn.style.fontSize = "10px";
+        pickerBtn.type = "button";
+        pickerBtn.title = "Pick from Home Assistant entities";
+        pickerBtn.addEventListener("click", () => {
+          openEntityPickerForWidget(widget, entityInput);
+        });
+
+        entityRow.appendChild(entityInput);
+        entityRow.appendChild(pickerBtn);
+        entityWrap.appendChild(entityLbl);
+        entityWrap.appendChild(entityRow);
+        panel.appendChild(entityWrap);
+
+        addLabeledInput("Label (optional)", "text", widget.title || "", (v) => {
+          widget.title = v;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+
+        const showLabelWrap = document.createElement("div");
+        showLabelWrap.className = "field";
+        const showLabelLbl = document.createElement("div");
+        showLabelLbl.className = "prop-label";
+        showLabelLbl.textContent = "Show label row";
+        const showLabelCb = document.createElement("input");
+        showLabelCb.type = "checkbox";
+        showLabelCb.checked = widget.props.show_label !== false;
+        showLabelCb.addEventListener("change", () => {
+          widget.props.show_label = showLabelCb.checked;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+        showLabelWrap.appendChild(showLabelLbl);
+        showLabelWrap.appendChild(showLabelCb);
+        panel.appendChild(showLabelWrap);
+
+        const showPctWrap = document.createElement("div");
+        showPctWrap.className = "field";
+        const showPctLbl = document.createElement("div");
+        showPctLbl.className = "prop-label";
+        showPctLbl.textContent = "Show percentage";
+        const showPctCb = document.createElement("input");
+        showPctCb.type = "checkbox";
+        showPctCb.checked = widget.props.show_percentage !== false;
+        showPctCb.addEventListener("change", () => {
+          widget.props.show_percentage = showPctCb.checked;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+        showPctWrap.appendChild(showPctCb);
+        panel.appendChild(showPctWrap);
+
+        addSelect("Line color", widget.props.color || "black", ["black", "white", "gray"], (val) => {
+          widget.props.color = val;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+      }
+
+      if (type === "graph") {
+        const infoWrap = document.createElement("div");
+        infoWrap.className = "field";
+        infoWrap.style.fontSize = "9px";
+        infoWrap.style.color = "var(--muted)";
+        infoWrap.style.marginBottom = "8px";
+        infoWrap.innerHTML = "📊 ESPHome graph component<br/>Plots sensor history over time";
+        panel.appendChild(infoWrap);
+
+        // Entity ID with picker
+        const entityWrap = document.createElement("div");
+        entityWrap.className = "field";
+        const entityLbl = document.createElement("div");
+        entityLbl.className = "prop-label";
+        entityLbl.textContent = "Sensor Entity ID";
+
+        const entityRow = document.createElement("div");
+        entityRow.style.display = "flex";
+        entityRow.style.gap = "4px";
+
+        const entityInput = document.createElement("input");
+        entityInput.className = "prop-input";
+        entityInput.type = "text";
+        entityInput.value = widget.entity_id || "";
+        entityInput.style.flex = "1";
+        entityInput.addEventListener("input", () => {
+          widget.entity_id = entityInput.value;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+
+        const pickerBtn = document.createElement("button");
+        pickerBtn.className = "btn btn-secondary";
+        pickerBtn.textContent = "⋮⋮⋮";
+        pickerBtn.style.padding = "5px 8px";
+        pickerBtn.style.fontSize = "10px";
+        pickerBtn.type = "button";
+        pickerBtn.title = "Pick from Home Assistant entities";
+        pickerBtn.addEventListener("click", () => {
+          openEntityPickerForWidget(widget, entityInput);
+        });
+
+        entityRow.appendChild(entityInput);
+        entityRow.appendChild(pickerBtn);
+        entityWrap.appendChild(entityLbl);
+        entityWrap.appendChild(entityRow);
+        panel.appendChild(entityWrap);
+
+        // Duration
+        addSelect("Duration", widget.props.duration || "1h",
+          ["1h", "3h", "6h", "12h", "24h", "2d", "3d", "7d", "14d", "30d"], (val) => {
+            widget.props.duration = val;
+            scheduleSnippetUpdate();
+          });
+
+        // Grid settings
+        const gridHeader = document.createElement("div");
+        gridHeader.className = "prop-label";
+        gridHeader.style.marginTop = "12px";
+        gridHeader.style.marginBottom = "4px";
+        gridHeader.textContent = "Grid Settings";
+        panel.appendChild(gridHeader);
+
+        addLabeledInput("X Grid (e.g., 10min, 1h)", "text", widget.props.x_grid || "", (v) => {
+          widget.props.x_grid = v;
+          scheduleSnippetUpdate();
+        });
+
+        addLabeledInput("Y Grid (e.g., 1.0, 5.0)", "text", widget.props.y_grid || "", (v) => {
+          widget.props.y_grid = v;
+          scheduleSnippetUpdate();
+        });
+
+        // Border toggle
+        const borderWrap = document.createElement("div");
+        borderWrap.className = "field";
+        const borderLbl = document.createElement("div");
+        borderLbl.className = "prop-label";
+        borderLbl.textContent = "Show border";
+        const borderCb = document.createElement("input");
+        borderCb.type = "checkbox";
+        borderCb.checked = widget.props.border !== false;
+        borderCb.addEventListener("change", () => {
+          widget.props.border = borderCb.checked;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+        borderWrap.appendChild(borderLbl);
+        borderWrap.appendChild(borderCb);
+        panel.appendChild(borderWrap);
+
+        // Line styling
+        const lineHeader = document.createElement("div");
+        lineHeader.className = "prop-label";
+        lineHeader.style.marginTop = "12px";
+        lineHeader.style.marginBottom = "4px";
+        lineHeader.textContent = "Line Styling";
+        panel.appendChild(lineHeader);
+
+        addSelect("Line type", widget.props.line_type || "SOLID",
+          ["SOLID", "DASHED", "DOTTED"], (val) => {
+            widget.props.line_type = val;
+            scheduleSnippetUpdate();
+          });
+
+        addLabeledInput("Line thickness (px)", "number", widget.props.line_thickness || 3, (v) => {
+          widget.props.line_thickness = parseInt(v || "3", 10) || 3;
+          scheduleSnippetUpdate();
+        });
+
+        const contWrap = document.createElement("div");
+        contWrap.className = "field";
+        const contLbl = document.createElement("div");
+        contLbl.className = "prop-label";
+        contLbl.textContent = "Continuous line";
+        const contCb = document.createElement("input");
+        contCb.type = "checkbox";
+        contCb.checked = !!widget.props.continuous;
+        contCb.addEventListener("change", () => {
+          widget.props.continuous = contCb.checked;
+          scheduleSnippetUpdate();
+        });
+        contWrap.appendChild(contLbl);
+        contWrap.appendChild(contCb);
+        panel.appendChild(contWrap);
+
+        addSelect("Color", widget.props.color || "black", ["black", "white", "gray"], (val) => {
+          widget.props.color = val;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+
+        // Y-axis range
+        const rangeHeader = document.createElement("div");
+        rangeHeader.className = "prop-label";
+        rangeHeader.style.marginTop = "12px";
+        rangeHeader.style.marginBottom = "4px";
+        rangeHeader.textContent = "Y-Axis Range (Optional)";
+        panel.appendChild(rangeHeader);
+
+        addLabeledInput("Min value", "text", widget.props.min_value || "", (v) => {
+          widget.props.min_value = v;
+          scheduleSnippetUpdate();
+        });
+
+        addLabeledInput("Max value", "text", widget.props.max_value || "", (v) => {
+          widget.props.max_value = v;
+          scheduleSnippetUpdate();
+        });
+
+        addLabeledInput("Min range", "text", widget.props.min_range || "", (v) => {
+          widget.props.min_range = v;
+          scheduleSnippetUpdate();
+        });
+
+        addLabeledInput("Max range", "text", widget.props.max_range || "", (v) => {
+          widget.props.max_range = v;
+          scheduleSnippetUpdate();
+        });
+      }
+
       if (type === "image") {
         const helpWrap = document.createElement("div");
         helpWrap.className = "field";
@@ -3028,12 +3611,12 @@
           "<code style='background:#f0f0f0;padding:2px 4px;border-radius:2px;'>/config/esphome/images/photo.jpg</code><br/>" +
           "<span style='color:#4a9eff;'>ℹ️ Widget size controls ESPHome resize parameter</span>";
         panel.appendChild(helpWrap);
-        
+
         addLabeledInput("Image path", "text", widget.props.path || "", (v) => {
           widget.props.path = v;
           renderCanvas();
         });
-        
+
         const invertWrap = document.createElement("div");
         invertWrap.className = "field";
         const invertLbl = document.createElement("div");
@@ -3050,24 +3633,24 @@
         invertWrap.appendChild(invertLbl);
         invertWrap.appendChild(invertCb);
         panel.appendChild(invertWrap);
-        
+
         const fillWrap = document.createElement("div");
         fillWrap.className = "field";
         fillWrap.style.marginTop = "12px";
-        
-        const isFullScreen = (widget.x === 0 && widget.y === 0 && 
-                             widget.width === CANVAS_WIDTH && 
-                             widget.height === CANVAS_HEIGHT);
-        
+
+        const isFullScreen = (widget.x === 0 && widget.y === 0 &&
+          widget.width === CANVAS_WIDTH &&
+          widget.height === CANVAS_HEIGHT);
+
         const fillBtn = document.createElement("button");
         fillBtn.className = "btn " + (isFullScreen ? "btn-primary" : "btn-secondary") + " btn-full";
         fillBtn.textContent = isFullScreen ? "✓ Full Screen (click to restore)" : "⛶ Fill Screen";
         fillBtn.type = "button";
         fillBtn.title = isFullScreen ? "Restore to previous size" : "Resize image to fill entire screen";
         fillBtn.addEventListener("click", () => {
-          if (widget.x === 0 && widget.y === 0 && 
-              widget.width === CANVAS_WIDTH && 
-              widget.height === CANVAS_HEIGHT) {
+          if (widget.x === 0 && widget.y === 0 &&
+            widget.width === CANVAS_WIDTH &&
+            widget.height === CANVAS_HEIGHT) {
             widget.x = 50;
             widget.y = 50;
             widget.width = 200;
@@ -3096,13 +3679,13 @@
           "<code style='background:#f0f0f0;padding:2px 4px;border-radius:2px;'>https://example.com/camera/snapshot.jpg </code><br/>" +
           "<span style='color:#4a9eff;'>ℹ️ Images are downloaded at specified intervals</span>";
         panel.appendChild(helpWrap);
-        
+
         addLabeledInput("Remote URL", "text", widget.props.url || "", (v) => {
           widget.props.url = v;
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         addLabeledInput("Update interval (seconds)", "number", widget.props.interval_s || 300, (v) => {
           widget.props.interval_s = parseInt(v, 10) || 300;
           renderCanvas();
@@ -3121,19 +3704,19 @@
             scheduleSnippetUpdate();
           }
         );
-        
+
         addLabeledInput("Time font size", "number", widget.props.time_font_size || 28, (v) => {
           widget.props.time_font_size = parseInt(v || "28", 10) || 28;
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         addLabeledInput("Date font size", "number", widget.props.date_font_size || 16, (v) => {
           widget.props.date_font_size = parseInt(v || "16", 10) || 16;
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         addSelect("Color", widget.props.color || "black", ["black", "white", "gray"], (val) => {
           widget.props.color = val;
           renderCanvas();
@@ -3147,11 +3730,11 @@
         const entityLbl = document.createElement("div");
         entityLbl.className = "prop-label";
         entityLbl.textContent = "Entity ID (numeric sensor)";
-        
+
         const entityRow = document.createElement("div");
         entityRow.style.display = "flex";
         entityRow.style.gap = "4px";
-        
+
         const entityInput = document.createElement("input");
         entityInput.className = "prop-input";
         entityInput.type = "text";
@@ -3165,7 +3748,7 @@
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         const pickerBtn = document.createElement("button");
         pickerBtn.className = "btn btn-secondary";
         pickerBtn.textContent = "⋮⋮⋮";
@@ -3176,19 +3759,19 @@
         pickerBtn.addEventListener("click", () => {
           openEntityPickerForWidget(widget, entityInput);
         });
-        
+
         entityRow.appendChild(entityInput);
         entityRow.appendChild(pickerBtn);
         entityWrap.appendChild(entityLbl);
         entityWrap.appendChild(entityRow);
         panel.appendChild(entityWrap);
-        
+
         addLabeledInput("Label (optional)", "text", widget.title || "", (v) => {
           widget.title = v;
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         const showLabelWrap = document.createElement("div");
         showLabelWrap.className = "field";
         const showLabelLbl = document.createElement("div");
@@ -3205,7 +3788,7 @@
         showLabelWrap.appendChild(showLabelLbl);
         showLabelWrap.appendChild(showLabelCb);
         panel.appendChild(showLabelWrap);
-        
+
         const showPctWrap = document.createElement("div");
         showPctWrap.className = "field";
         const showPctLbl = document.createElement("div");
@@ -3222,19 +3805,19 @@
         showPctWrap.appendChild(showPctLbl);
         showPctWrap.appendChild(showPctCb);
         panel.appendChild(showPctWrap);
-        
+
         addLabeledInput("Bar height (px)", "number", widget.props.bar_height || 15, (v) => {
           widget.props.bar_height = parseInt(v || "15", 10) || 15;
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         addLabeledInput("Border width (px)", "number", widget.props.border_width || 1, (v) => {
           widget.props.border_width = parseInt(v || "1", 10) || 1;
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         addSelect("Color", widget.props.color || "black", ["black", "white", "gray"], (val) => {
           widget.props.color = val;
           renderCanvas();
@@ -3248,11 +3831,11 @@
         const entityLbl = document.createElement("div");
         entityLbl.className = "prop-label";
         entityLbl.textContent = "Battery Entity ID";
-        
+
         const entityRow = document.createElement("div");
         entityRow.style.display = "flex";
         entityRow.style.gap = "4px";
-        
+
         const entityInput = document.createElement("input");
         entityInput.className = "prop-input";
         entityInput.type = "text";
@@ -3266,7 +3849,7 @@
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         const pickerBtn = document.createElement("button");
         pickerBtn.className = "btn btn-secondary";
         pickerBtn.textContent = "⋮⋮⋮";
@@ -3277,13 +3860,13 @@
         pickerBtn.addEventListener("click", () => {
           openEntityPickerForWidget(widget, entityInput);
         });
-        
+
         entityRow.appendChild(entityInput);
         entityRow.appendChild(pickerBtn);
         entityWrap.appendChild(entityLbl);
         entityWrap.appendChild(entityRow);
         panel.appendChild(entityWrap);
-        
+
         addLabeledInput("Icon size (px)", "number", widget.props.size || 48, (v) => {
           let n = parseInt(v || "48", 10);
           if (Number.isNaN(n) || n < 16) n = 16;
@@ -3292,7 +3875,7 @@
           renderCanvas();
           scheduleSnippetUpdate();
         });
-        
+
         addSelect("Color", widget.props.color || "black", ["black", "white", "gray"], (val) => {
           widget.props.color = val;
           renderCanvas();
@@ -3314,11 +3897,11 @@
           const entityLbl = document.createElement("div");
           entityLbl.className = "prop-label";
           entityLbl.textContent = "Entity ID";
-          
+
           const entityRow = document.createElement("div");
           entityRow.style.display = "flex";
           entityRow.style.gap = "4px";
-          
+
           const entityInput = document.createElement("input");
           entityInput.className = "prop-input";
           entityInput.type = "text";
@@ -3332,7 +3915,7 @@
             renderCanvas();
             scheduleSnippetUpdate();
           });
-          
+
           const pickerBtn = document.createElement("button");
           pickerBtn.className = "btn btn-secondary";
           pickerBtn.textContent = "⋮⋮⋮";
@@ -3343,19 +3926,19 @@
           pickerBtn.addEventListener("click", () => {
             openEntityPickerForWidget(widget, entityInput);
           });
-          
+
           entityRow.appendChild(entityInput);
           entityRow.appendChild(pickerBtn);
           entityWrap.appendChild(entityLbl);
           entityWrap.appendChild(entityRow);
           panel.appendChild(entityWrap);
-          
+
           addLabeledInput("Label (leave empty for value only)", "text", widget.title || "", (v) => {
             widget.title = v;
             renderCanvas();
             scheduleSnippetUpdate();
           });
-          
+
           addSelect(
             "Display format",
             widget.props.value_format || "value_only",
@@ -3366,13 +3949,13 @@
               scheduleSnippetUpdate();
             }
           );
-          
+
           addLabeledInput("Label font size", "number", widget.props.label_font_size || 14, (v) => {
             widget.props.label_font_size = parseInt(v || "14", 10) || 14;
             renderCanvas();
             scheduleSnippetUpdate();
           });
-          
+
           addLabeledInput("Value font size", "number", widget.props.value_font_size || 20, (v) => {
             widget.props.value_font_size = parseInt(v || "20", 10) || 20;
             renderCanvas();
@@ -3385,34 +3968,241 @@
             scheduleSnippetUpdate();
           });
         }
-        
+
         if (type === "text") {
-          addSelect("Font family", widget.props.font_family || "Inter", ["Inter", "Roboto", "Open Sans", "Lato", "Montserrat", "Poppins"], (val) => {
-            widget.props.font_family = val;
-            renderCanvas();
-            scheduleSnippetUpdate();
+          const fontOptions = [
+            "Roboto", "Inter", "Open Sans", "Lato", "Montserrat",
+            "Poppins", "Raleway", "Roboto Mono", "Ubuntu", "Nunito",
+            "Playfair Display", "Merriweather", "Work Sans", "Source Sans Pro", "Quicksand",
+            "Custom..."
+          ];
+
+          const currentFont = widget.props.font_family || "Roboto";
+          const isCustom = !fontOptions.slice(0, -1).includes(currentFont);
+
+          addSelect("Font family", isCustom ? "Custom..." : currentFont, fontOptions, (val) => {
+            if (val !== "Custom...") {
+              widget.props.font_family = val;
+              widget.props.custom_font_family = "";
+              renderCanvas();
+              renderPropertiesPanel();
+              scheduleSnippetUpdate();
+            } else {
+              // Set to Custom... to trigger the input field
+              widget.props.font_family = "Custom...";
+              renderPropertiesPanel();
+            }
           });
-          
+
+          // Show custom font input if "Custom..." is selected or if font is not in list
+          if (isCustom || widget.props.font_family === "Custom...") {
+            const customWrap = document.createElement("div");
+            customWrap.className = "field";
+            customWrap.style.marginTop = "-8px";
+
+            const customLbl = document.createElement("div");
+            customLbl.className = "prop-label";
+            customLbl.textContent = "Custom Google Font";
+
+            const customInput = document.createElement("input");
+            customInput.className = "prop-input";
+            customInput.type = "text";
+            customInput.placeholder = "e.g., Pacifico, Dancing Script";
+            customInput.value = (widget.props.font_family === "Custom..." ? "" : (isCustom ? currentFont : (widget.props.custom_font_family || "")));
+
+            customInput.addEventListener("input", () => {
+              const val = customInput.value.trim();
+              widget.props.font_family = val || "Roboto";
+              widget.props.custom_font_family = val;
+              renderCanvas();
+              scheduleSnippetUpdate();
+            });
+
+            customWrap.appendChild(customLbl);
+            customWrap.appendChild(customInput);
+            panel.appendChild(customWrap);
+
+            const customHint = document.createElement("div");
+            customHint.style.fontSize = "9px";
+            customHint.style.color = "#666";
+            customHint.style.marginTop = "2px";
+            customHint.style.marginBottom = "8px";
+            customHint.innerHTML = 'Browse <a href="https://fonts.google.com" target="_blank" style="color: #52c7ea">fonts.google.com</a> (no preview, but generates correct YAML)';
+            panel.appendChild(customHint);
+          }
+
           addLabeledInput("Font size", "number", widget.props.font_size || 16, (v) => {
             widget.props.font_size = parseInt(v || "16", 10) || 16;
             renderCanvas();
             scheduleSnippetUpdate();
           });
-        }
-        
-        if (type === "sensor_text") {
-          addSelect("Font family", widget.props.font_family || "Inter", ["Inter", "Roboto", "Open Sans", "Lato", "Montserrat", "Poppins"], (val) => {
-            widget.props.font_family = val;
+
+          addSelect(
+            "Font weight",
+            String(widget.props.font_weight || 400),
+            ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+            (val) => {
+              widget.props.font_weight = parseInt(val, 10);
+              renderCanvas();
+              scheduleSnippetUpdate();
+            }
+          );
+
+          const italicWrap = document.createElement("div");
+          italicWrap.className = "field";
+          const italicLbl = document.createElement("div");
+          italicLbl.className = "prop-label";
+          italicLbl.textContent = "Italic";
+          const italicCb = document.createElement("input");
+          italicCb.type = "checkbox";
+          italicCb.checked = !!widget.props.italic;
+          italicCb.addEventListener("change", () => {
+            widget.props.italic = italicCb.checked;
             renderCanvas();
             scheduleSnippetUpdate();
           });
+          italicWrap.appendChild(italicLbl);
+          italicWrap.appendChild(italicCb);
+          panel.appendChild(italicWrap);
+
+          addSelect(
+            "BPP (anti-aliasing)",
+            String(widget.props.bpp || 1),
+            ["1", "2", "4", "8"],
+            (val) => {
+              widget.props.bpp = parseInt(val, 10);
+              scheduleSnippetUpdate();
+            }
+          );
+
+          const bppInfo = document.createElement("div");
+          bppInfo.style.fontSize = "9px";
+          bppInfo.style.color = "#666";
+          bppInfo.style.marginTop = "-8px";
+          bppInfo.style.marginBottom = "8px";
+          bppInfo.textContent = "1=no AA, 2=4 levels, 4=16 levels, 8=256 levels (smoother but larger)";
+          panel.appendChild(bppInfo);
         }
-        
+
+        if (type === "sensor_text") {
+          const fontOptions = [
+            "Roboto", "Inter", "Open Sans", "Lato", "Montserrat",
+            "Poppins", "Raleway", "Roboto Mono", "Ubuntu", "Nunito",
+            "Playfair Display", "Merriweather", "Work Sans", "Source Sans Pro", "Quicksand",
+            "Custom..."
+          ];
+
+          const currentFont = widget.props.font_family || "Roboto";
+          const isCustom = !fontOptions.slice(0, -1).includes(currentFont);
+
+          addSelect("Font family", isCustom ? "Custom..." : currentFont, fontOptions, (val) => {
+            if (val !== "Custom...") {
+              widget.props.font_family = val;
+              widget.props.custom_font_family = "";
+              renderCanvas();
+              renderPropertiesPanel();
+              scheduleSnippetUpdate();
+            } else {
+              widget.props.font_family = "Custom...";
+              renderPropertiesPanel();
+            }
+          });
+
+          if (isCustom || widget.props.font_family === "Custom...") {
+            const customWrap = document.createElement("div");
+            customWrap.className = "field";
+            customWrap.style.marginTop = "-8px";
+
+            const customLbl = document.createElement("div");
+            customLbl.className = "prop-label";
+            customLbl.textContent = "Custom Google Font";
+
+            const customInput = document.createElement("input");
+            customInput.className = "prop-input";
+            customInput.type = "text";
+            customInput.placeholder = "e.g., Pacifico, Dancing Script";
+            customInput.value = (widget.props.font_family === "Custom..." ? "" : (isCustom ? currentFont : (widget.props.custom_font_family || "")));
+
+            customInput.addEventListener("input", () => {
+              const val = customInput.value.trim();
+              widget.props.font_family = val || "Roboto";
+              widget.props.custom_font_family = val;
+              renderCanvas();
+              scheduleSnippetUpdate();
+            });
+
+            customWrap.appendChild(customLbl);
+            customWrap.appendChild(customInput);
+            panel.appendChild(customWrap);
+
+            const customHint = document.createElement("div");
+            customHint.style.fontSize = "9px";
+            customHint.style.color = "#666";
+            customHint.style.marginTop = "2px";
+            customHint.style.marginBottom = "8px";
+            customHint.innerHTML = 'Browse <a href="https://fonts.google.com" target="_blank" style="color: #52c7ea">fonts.google.com</a>';
+            panel.appendChild(customHint);
+          }
+        }
+
         addSelect("Text color", widget.props.color || "black", ["black", "white", "gray"], (val) => {
           widget.props.color = val;
           renderCanvas();
           scheduleSnippetUpdate();
         });
+
+      }
+
+      if (type === "puppet") {
+        addLabeledInput("File path / URL", "text", widget.props.image_url || "", (v) => {
+          widget.props.image_url = v;
+          renderCanvas();
+          scheduleSnippetUpdate();
+        });
+
+        const mdiHint = document.createElement("div");
+        mdiHint.style.fontSize = "9px";
+        mdiHint.style.color = "#666";
+        mdiHint.style.marginTop = "-8px";
+        mdiHint.style.marginBottom = "8px";
+        mdiHint.innerHTML = 'Tip: Use mdi:icon-name for Material Design Icons (auto-downloaded). Browse <a href="https://pictogrammers.com/library/mdi/" target="_blank" style="color: #52c7ea">MDI Library</a>';
+        panel.appendChild(mdiHint);
+
+        addSelect(
+          "Image type",
+          widget.props.image_type || "RGB565",
+          ["RGB565", "RGB", "GRAYSCALE", "BINARY"],
+          (val) => {
+            widget.props.image_type = val;
+            scheduleSnippetUpdate();
+          }
+        );
+
+        const typeHint = document.createElement("div");
+        typeHint.style.fontSize = "9px";
+        typeHint.style.color = "#666";
+        typeHint.style.marginTop = "-8px";
+        typeHint.style.marginBottom = "8px";
+        typeHint.textContent = "RGB565=2B/px, RGB=3B/px, GRAYSCALE=1B/px, BINARY=1bit/px";
+        panel.appendChild(typeHint);
+
+        addSelect(
+          "Transparency",
+          widget.props.transparency || "opaque",
+          ["opaque", "chroma_key", "alpha_channel"],
+          (val) => {
+            widget.props.transparency = val;
+            scheduleSnippetUpdate();
+          }
+        );
+
+        const transHint = document.createElement("div");
+        transHint.style.fontSize = "9px";
+        transHint.style.color = "#666";
+        transHint.style.marginTop = "-8px";
+        transHint.style.marginBottom = "8px";
+        transHint.textContent = "opaque=no transparency, chroma_key=color key, alpha_channel=smooth blend";
+        panel.appendChild(transHint);
       }
 
       if (type === "shape_rect" || type === "shape_circle") {
@@ -3497,7 +4287,7 @@
       condSectionHeader.style.borderTop = "1px solid var(--border-subtle)";
       condSectionHeader.style.paddingTop = "8px";
       panel.appendChild(condSectionHeader);
-      
+
       const condHelpWrap = document.createElement("div");
       condHelpWrap.className = "field";
       condHelpWrap.style.fontSize = "9px";
@@ -3505,17 +4295,17 @@
       condHelpWrap.style.marginBottom = "6px";
       condHelpWrap.innerHTML = "Show/hide this widget based on an entity's state.";
       panel.appendChild(condHelpWrap);
-      
+
       const condEntityWrap = document.createElement("div");
       condEntityWrap.className = "field";
       const condEntityLbl = document.createElement("div");
       condEntityLbl.className = "prop-label";
       condEntityLbl.textContent = "Condition Entity (optional)";
-      
+
       const condEntityRow = document.createElement("div");
       condEntityRow.style.display = "flex";
       condEntityRow.style.gap = "4px";
-      
+
       const condEntityInput = document.createElement("input");
       condEntityInput.className = "prop-input";
       condEntityInput.type = "text";
@@ -3526,7 +4316,7 @@
         widget.condition_entity = condEntityInput.value || null;
         scheduleSnippetUpdate();
       });
-      
+
       const condPickerBtn = document.createElement("button");
       condPickerBtn.className = "btn btn-secondary";
       condPickerBtn.textContent = "⋮⋮⋮";
@@ -3544,13 +4334,13 @@
           scheduleSnippetUpdate();
         });
       });
-      
+
       condEntityRow.appendChild(condEntityInput);
       condEntityRow.appendChild(condPickerBtn);
       condEntityWrap.appendChild(condEntityLbl);
       condEntityWrap.appendChild(condEntityRow);
       panel.appendChild(condEntityWrap);
-      
+
       addSelect(
         "Operator",
         widget.condition_operator || "==",
@@ -3560,12 +4350,12 @@
           scheduleSnippetUpdate();
         }
       );
-      
+
       addLabeledInput("Expected value", "text", widget.condition_state || "", (v) => {
         widget.condition_state = v || null;
         scheduleSnippetUpdate();
       });
-      
+
       const clearCondWrap = document.createElement("div");
       clearCondWrap.className = "field";
       clearCondWrap.style.marginTop = "4px";
@@ -3646,15 +4436,15 @@
         alert("Cannot delete the last page. At least one page is required.");
         return;
       }
-      
+
       pages.splice(pageIndex, 1);
-      
+
       if (currentPageIndex >= pages.length) {
         currentPageIndex = pages.length - 1;
       } else if (currentPageIndex > pageIndex) {
         currentPageIndex--;
       }
-      
+
       selectedWidgetId = null;
       rebuildWidgetsIndex();
       renderPagesSidebar();
@@ -3701,7 +4491,7 @@
         h = Math.max(10, Math.min(CANVAS_HEIGHT - widget.y, h));
         widget.width = Math.round(w);
         widget.height = Math.round(h);
-        
+
         const wtype = (widget.type || "").toLowerCase();
         if (wtype === "icon") {
           const props = widget.props || {};
@@ -3788,6 +4578,74 @@
         lines.push("");
       }
 
+      // Collect all graph widgets to generate graph: declarations
+      const graphWidgets = [];
+      for (const page of pagesLocal) {
+        if (!page || !Array.isArray(page.widgets)) continue;
+        for (const w of page.widgets) {
+          const t = (w.type || "").toLowerCase();
+          if (t === "graph") {
+            graphWidgets.push(w);
+          }
+        }
+      }
+
+      // Generate graph: component declarations
+      if (graphWidgets.length > 0) {
+        lines.push("graph:");
+        graphWidgets.forEach(w => {
+          const entityId = (w.entity_id || "").trim();
+          const p = w.props || {};
+          const duration = p.duration || "1h";
+          const border = p.border !== false;
+          const graphId = `graph_${w.id}`.replace(/-/g, "_");
+
+          lines.push(`  - id: ${graphId}`);
+          if (entityId) {
+            const sensorId = entityId.replace(/\./g, "_").replace(/-/g, "_");
+            lines.push(`    sensor: ${sensorId}`);
+          }
+          lines.push(`    duration: ${duration}`);
+          lines.push(`    width: ${w.width || 200}`);
+          lines.push(`    height: ${w.height || 100}`);
+          lines.push(`    border: ${border}`);
+
+          // Optional grid settings
+          if (p.x_grid && p.x_grid.trim()) {
+            lines.push(`    x_grid: ${p.x_grid.trim()}`);
+          }
+          if (p.y_grid && p.y_grid.trim()) {
+            lines.push(`    y_grid: ${p.y_grid.trim()}`);
+          }
+
+          // Line styling
+          if (p.line_thickness && p.line_thickness !== 3) {
+            lines.push(`    line_thickness: ${p.line_thickness}`);
+          }
+          if (p.line_type && p.line_type !== "SOLID") {
+            lines.push(`    line_type: ${p.line_type}`);
+          }
+          if (p.continuous) {
+            lines.push(`    continuous: true`);
+          }
+
+          // Y-axis range settings
+          if (p.min_value && p.min_value.trim()) {
+            lines.push(`    min_value: ${p.min_value.trim()}`);
+          }
+          if (p.max_value && p.max_value.trim()) {
+            lines.push(`    max_value: ${p.max_value.trim()}`);
+          }
+          if (p.min_range && p.min_range.trim()) {
+            lines.push(`    min_range: ${p.min_range.trim()}`);
+          }
+          if (p.max_range && p.max_range.trim()) {
+            lines.push(`    max_range: ${p.max_range.trim()}`);
+          }
+        });
+        lines.push("");
+      }
+
       lines.push("globals:");
       lines.push("  - id: display_page");
       lines.push("    type: int");
@@ -3816,8 +4674,26 @@
               const fontSize = parseInt(p.font_size || 12, 10) || 12;
               const colorProp = p.color || "black";
               const color = colorProp === "white" ? "COLOR_ON" : "COLOR_OFF";
-              lines.push(`        // widget:text id:${w.id} type:text x:${w.x} y:${w.y} w:${w.width} h:${w.height} text:"${txt}" font_size:${fontSize} color:${colorProp}`);
-              lines.push(`        it.print(${w.x}, ${w.y}, id(font_normal), ${color}, "${txt}");`);
+              const textAlign = p.text_align || "TOP_LEFT";
+              const fontWeight = p.font_weight || 400;
+              const fontFamily = p.font_family || "Roboto";
+              const italic = p.italic ? "true" : "false";
+              const bpp = p.bpp || 1;
+
+              lines.push(`        // widget:text id:${w.id} type:text x:${w.x} y:${w.y} w:${w.width} h:${w.height} text:"${txt}" font:"${fontFamily}" size:${fontSize} weight:${fontWeight} italic:${italic} bpp:${bpp} color:${colorProp} align:${textAlign}`);
+              lines.push(`        // Note: Configure font with weight in font: section. Example:`);
+              lines.push(`        // font:`);
+              lines.push(`        //   - file:`);
+              lines.push(`        //       type: gfonts`);
+              lines.push(`        //       family: ${fontFamily}`);
+              lines.push(`        //       weight: ${fontWeight}`);
+              if (p.italic) {
+                lines.push(`        //       italic: true`);
+              }
+              lines.push(`        //     id: font_${fontFamily.toLowerCase().replace(/\s+/g, '_')}_${fontWeight}`);
+              lines.push(`        //     size: ${fontSize}`);
+              lines.push(`        //     bpp: ${bpp}  # 1=no AA, 2=4 levels, 4=16 levels, 8=256 levels`);
+              lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, TextAlign::${textAlign}, "${txt}");`);
             } else if (t === "sensor_text") {
               const entityId = (w.entity_id || "").trim();
               const label = (w.title || "").replace(/"/g, '\\"');
@@ -3825,24 +4701,25 @@
               const labelFontSize = parseInt(p.label_font_size || 14, 10) || 14;
               const valueFontSize = parseInt(p.value_font_size || 20, 10) || 20;
               const color = p.color === "white" ? "COLOR_ON" : "COLOR_OFF";
-              
+              const textAlign = p.text_align || "TOP_LEFT";
+
               if (entityId) {
                 const safeId = entityId.replace(/\./g, "_").replace(/-/g, "_");
-                lines.push(`        // widget:sensor_text id:${w.id} type:sensor_text x:${w.x} y:${w.y} w:${w.width} h:${w.height} ent:${entityId} title:"${label}" label_font:${labelFontSize} value_font:${valueFontSize} format:${valueFormat}`);
+                lines.push(`        // widget:sensor_text id:${w.id} type:sensor_text x:${w.x} y:${w.y} w:${w.width} h:${w.height} ent:${entityId} title:"${label}" label_font:${labelFontSize} value_font:${valueFontSize} format:${valueFormat} align:${textAlign}`);
                 if (valueFormat === "label_newline_value" && label) {
-                  lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, "${label}");`);
+                  lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, TextAlign::${textAlign}, "${label}");`);
                   const valueY = w.y + labelFontSize + 4;
-                  lines.push(`        it.printf(${w.x}, ${valueY}, id(font_normal), ${color}, "%s", id(${safeId}).state.c_str());`);
+                  lines.push(`        it.printf(${w.x}, ${valueY}, id(font_normal), ${color}, TextAlign::${textAlign}, "%s", id(${safeId}).state.c_str());`);
                 } else if (valueFormat === "label_value" && label) {
-                  lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, "${label}: %s", id(${safeId}).state.c_str());`);
+                  lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, TextAlign::${textAlign}, "${label}: %s", id(${safeId}).state.c_str());`);
                 } else {
-                  lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, "%s", id(${safeId}).state.c_str());`);
+                  lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, TextAlign::${textAlign}, "%s", id(${safeId}).state.c_str());`);
                 }
               } else {
                 const placeholder = label || "sensor";
-                lines.push(`        // widget:sensor_text id:${w.id} type:sensor_text x:${w.x} y:${w.y} w:${w.width} h:${w.height} title:"${label}" label_font:${labelFontSize} value_font:${valueFontSize}`);
+                lines.push(`        // widget:sensor_text id:${w.id} type:sensor_text x:${w.x} y:${w.y} w:${w.width} h:${w.height} title:"${label}" label_font:${labelFontSize} value_font:${valueFontSize} align:${textAlign}`);
                 lines.push(`        // No entity_id configured for this sensor_text widget`);
-                lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, "${placeholder}: N/A");`);
+                lines.push(`        it.printf(${w.x}, ${w.y}, id(font_normal), ${color}, TextAlign::${textAlign}, "${placeholder}: N/A");`);
               }
             } else if (t === "icon") {
               const raw = (p.code || "").trim().toUpperCase().replace(/^0X/, "");
@@ -3911,7 +4788,8 @@
               const color = p.color === "white" ? "COLOR_ON" : "COLOR_OFF";
               if (path) {
                 const safeId = "img_" + path.replace(/[^a-zA-Z0-9]/g, "_");
-                lines.push(`        // widget:image id:${w.id} type:image x:${w.x} y:${w.y} w:${w.width} h:${w.height} path:"${path}" invert:${invert}`);
+                const sizeComment = (w.width && w.height) ? ` (resize: ${w.width}x${w.height})` : "";
+                lines.push(`        // widget:image id:${w.id} type:image x:${w.x} y:${w.y} w:${w.width} h:${w.height} path:"${path}" invert:${invert}${sizeComment}`);
                 if (invert) {
                   lines.push(`        it.image(${w.x}, ${w.y}, id(${safeId}), COLOR_OFF, COLOR_ON);`);
                 } else {
@@ -3921,11 +4799,41 @@
                 lines.push(`        // widget:image id:${w.id} type:image x:${w.x} y:${w.y} w:${w.width} h:${w.height} (no path)`);
                 lines.push(`        it.rectangle(${w.x}, ${w.y}, ${w.width}, ${w.height}, ${color});`);
               }
+            } else if (t === "puppet") {
+              const imageUrl = (p.image_url || "").trim();
+              const imageType = (p.image_type || "RGB565").toLowerCase();
+              const transparency = p.transparency || "opaque";
+              const isMDI = imageUrl.startsWith("mdi:");
+
+              if (!imageUrl) {
+                lines.push(`        // widget:puppet id:${w.id} type:puppet x:${w.x} y:${w.y} w:${w.width} h:${w.height} (no image URL)`);
+                lines.push(`        it.rectangle(${w.x}, ${w.y}, ${w.width}, ${w.height}, COLOR_OFF);`);
+                lines.push(`        it.printf(${w.x}+5, ${w.y}+5, id(font_small), COLOR_OFF, TextAlign::TOP_LEFT, "No image");`);
+              } else {
+                const isRemote = imageUrl.startsWith("http://") || imageUrl.startsWith("https://");
+                const safeId = `img_${w.id}`.replace(/-/g, "_");
+
+                lines.push(`        // widget:puppet id:${w.id} type:puppet x:${w.x} y:${w.y} w:${w.width} h:${w.height} url:"${imageUrl}" img_type:${imageType} transparency:${transparency}`);
+                lines.push(`        // Add to image: section:`);
+                lines.push(`        // image:`);
+                lines.push(`        //   - file: ${isMDI ? imageUrl : (isRemote ? imageUrl : '"' + imageUrl + '"')}`);
+                lines.push(`        //     id: ${safeId}`);
+                lines.push(`        //     type: ${imageType}`);
+                if (transparency !== "opaque") {
+                  lines.push(`        //     transparency: ${transparency}`);
+                }
+                lines.push(`        //     resize: ${w.width}x${w.height}`);
+                if (isMDI) {
+                  lines.push(`        //     # MDI icons auto-download from Material Design Icons`);
+                }
+                lines.push(`        it.image(${w.x}, ${w.y}, id(${safeId}));`);
+              }
             } else if (t === "online_image") {
               const url = (p.url || "").trim();
               const color = p.color === "white" ? "COLOR_ON" : "COLOR_OFF";
               const safeId = `img_${w.id}`.replace(/-/g, "_");
-              lines.push(`        // widget:online_image id:${w.id} type:online_image x:${w.x} y:${w.y} w:${w.width} h:${w.height} url:"${url}"`);
+              const sizeComment = (w.width && w.height) ? ` (resize: ${w.width}x${w.height})` : "";
+              lines.push(`        // widget:online_image id:${w.id} type:online_image x:${w.x} y:${w.y} w:${w.width} h:${w.height} url:"${url}"${sizeComment}`);
               if (url) {
                 lines.push(`        it.image(${w.x}, ${w.y}, id(${safeId}));`);
               } else {
@@ -4005,6 +4913,20 @@
                   lines.push("        }");
                 }
               }
+            } else if (t === "graph") {
+              const entityId = (w.entity_id || "").trim();
+              const duration = p.duration || "1h";
+              const borderEnabled = p.border !== false;
+              const color = p.color || "black";
+              const colorStyle = color === "white" ? "COLOR_ON" : "COLOR_OFF";
+              const graphId = `graph_${w.id}`.replace(/-/g, "_");
+
+              lines.push(`        // widget:graph id:${w.id} type:graph x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity:${entityId} duration:${duration} border:${borderEnabled} color:${color}`);
+              if (entityId) {
+                lines.push(`        it.graph(${w.x}, ${w.y}, id(${graphId}), ${colorStyle});`);
+              } else {
+                lines.push(`        // Graph widget needs entity_id configured to display`);
+              }
             } else if (t === "line") {
               const colorProp = p.color || "black";
               const color = colorProp === "white" ? "COLOR_ON" : "COLOR_OFF";
@@ -4049,7 +4971,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body)
         });
-        
+
         if (!saveResp.ok) {
           throw new Error("Failed to save layout to backend");
         }
@@ -4322,12 +5244,12 @@
       clearAllBtn.onclick = () => {
         const page = getCurrentPage();
         if (!page) return;
-        
+
         if (page.widgets.length === 0) {
           sidebarStatus.textContent = "Current page is already empty.";
           return;
         }
-        
+
         if (confirm(`Remove all ${page.widgets.length} widget(s) from "${page.name}"? This cannot be undone.`)) {
           page.widgets = [];
           selectedWidgetId = null;
@@ -4420,14 +5342,14 @@
 
     function savePageSettings() {
       if (!currentPageSettingsTarget) return;
-      
+
       const nameInput = document.getElementById("pageSettingsName");
       const refreshInput = document.getElementById("pageSettingsRefresh");
-      
+
       if (nameInput) {
         currentPageSettingsTarget.name = nameInput.value || "Page";
       }
-      
+
       if (refreshInput) {
         const val = refreshInput.value.trim();
         if (val === "") {
@@ -4437,7 +5359,7 @@
           currentPageSettingsTarget.refresh_s = (num >= 0) ? num : null;
         }
       }
-      
+
       renderPagesSidebar();
       scheduleSnippetUpdate();
       closePageSettingsModal();
@@ -4460,11 +5382,11 @@
       const enabledInput = document.getElementById("deviceSleepEnabled");
       const startInput = document.getElementById("deviceSleepStart");
       const endInput = document.getElementById("deviceSleepEnd");
-      
+
       if (enabledInput) enabledInput.checked = !!settings.sleep_enabled;
       if (startInput) startInput.value = settings.sleep_start_hour !== undefined ? settings.sleep_start_hour : 0;
       if (endInput) endInput.value = settings.sleep_end_hour !== undefined ? settings.sleep_end_hour : 5;
-      
+
       if (modal) modal.classList.remove("hidden");
     }
 
@@ -4477,23 +5399,23 @@
       const enabledInput = document.getElementById("deviceSleepEnabled");
       const startInput = document.getElementById("deviceSleepStart");
       const endInput = document.getElementById("deviceSleepEnd");
-      
+
       if (enabledInput) settings.sleep_enabled = !!enabledInput.checked;
-      
+
       if (startInput) {
         let val = parseInt(startInput.value, 10);
         if (isNaN(val) || val < 0) val = 0;
         if (val > 23) val = 23;
         settings.sleep_start_hour = val;
       }
-      
+
       if (endInput) {
         let val = parseInt(endInput.value, 10);
         if (isNaN(val) || val < 0) val = 0;
         if (val > 23) val = 23;
         settings.sleep_end_hour = val;
       }
-      
+
       scheduleSnippetUpdate();
       closeDeviceSettingsModal();
     }
@@ -4501,7 +5423,7 @@
     const deviceSettingsBtn = document.getElementById("deviceSettingsBtn");
     const deviceSettingsClose = document.getElementById("deviceSettingsClose");
     const deviceSettingsSave = document.getElementById("deviceSettingsSave");
-    
+
     if (deviceSettingsBtn) deviceSettingsBtn.addEventListener("click", openDeviceSettingsModal);
     if (deviceSettingsClose) deviceSettingsClose.addEventListener("click", closeDeviceSettingsModal);
     if (deviceSettingsSave) deviceSettingsSave.addEventListener("click", saveDeviceSettings);
@@ -4545,4 +5467,5 @@
     });
   </script>
 </body>
+
 </html>

@@ -246,6 +246,8 @@ def yaml_to_layout(snippet: str) -> DeviceConfig:
                 icon=None,
                 props=props,
             )
+            # Log parsed coordinates for debugging
+            _LOGGER.debug(f"Parsed widget {pw.id} type={pw.type} x={pw.x} y={pw.y} w={pw.width} h={pw.height}")
             wc.clamp_to_canvas()
             page.widgets.append(wc)
         device.pages.append(page)

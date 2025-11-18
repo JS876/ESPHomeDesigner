@@ -639,6 +639,8 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
     y = max(0, min(widget.y, IMAGE_HEIGHT))
     w = max(1, min(widget.width, IMAGE_WIDTH - x))
     h = max(1, min(widget.height, IMAGE_HEIGHT - y))
+    
+    _LOGGER.debug(f"Generating widget {widget.id} type={wtype} x={widget.x}→{x} y={widget.y}→{y} w={widget.width}→{w} h={widget.height}→{h}")
 
     wtype = (widget.type or "text").lower()
     props = widget.props or {}

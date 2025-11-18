@@ -252,16 +252,29 @@ def _parse_pages_from_lambda(lines: List[str]) -> Dict[int, List[ParsedWidget]]:
     for raw_line in lines:
         line = raw_line.strip()
 
-        # Track page blocks:
+        # Track page blocks - handle both patterns:
+        # 1) if (page == 0) {
+        # 2) if (id(display_page) == 0) {
+        page_match = None
         if line.startswith("if (page ==") and "{" in line:
+            # Pattern 1: if (page == 0) {
             try:
                 num_str = line.split("==")[1].split(")")[0].strip()
-                current_page = int(num_str)
-                pages.setdefault(current_page, [])
-                brace_depth = 1
+                page_match = int(num_str)
             except Exception:  # noqa: BLE001
-                current_page = None
-                brace_depth = 0
+                pass
+        elif line.startswith("if (id(display_page)") and "==" in line and "{" in line:
+            # Pattern 2: if (id(display_page) == 0) {
+            try:
+                num_str = line.split("==")[1].split(")")[0].strip()
+                page_match = int(num_str)
+            except Exception:  # noqa: BLE001
+                pass
+        
+        if page_match is not None:
+            current_page = page_match
+            pages.setdefault(current_page, [])
+            brace_depth = 1
             continue
 
         if current_page is not None:

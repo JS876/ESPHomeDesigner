@@ -163,6 +163,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.http.register_view(ReTerminalDashboardPanelView(hass))
     _LOGGER.info("%s: Panel view registered at /reterminal-dashboard", DOMAIN)
 
+    # Register the sidebar panel
+    # Note: This requires 'frontend' to be loaded, which is a dependency of this integration
+    if "frontend" in hass.data:
+        try:
+            hass.components.frontend.async_register_built_in_panel(
+                hass,
+                component_name="iframe",  # Use iframe panel type to load our view
+                sidebar_title="reTerminal",
+                sidebar_icon="mdi:tablet-dashboard",
+                frontend_url_path="reterminal-dashboard",
+                config={"url": "/reterminal-dashboard"},
+                require_admin=True,
+            )
+            _LOGGER.info("%s: Sidebar panel registered", DOMAIN)
+        except Exception as e:
+            _LOGGER.warning("%s: Failed to register sidebar panel: %s", DOMAIN, e)
+    else:
+        _LOGGER.warning("%s: Frontend integration not found, skipping sidebar registration", DOMAIN)
+
+    return True
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""

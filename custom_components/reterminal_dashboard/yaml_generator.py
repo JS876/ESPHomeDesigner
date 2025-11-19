@@ -197,7 +197,6 @@ def _generate_fonts(device: DeviceConfig) -> str:
                 path = props.get("path", "").strip()
                 if path:
                     # Replicate clamping logic to match _append_widget_render
-                    # This ensures the ID matches the one generated in the render loop
                     x = max(0, min(widget.x, IMAGE_WIDTH))
                     y = max(0, min(widget.y, IMAGE_HEIGHT))
                     width = max(1, min(widget.width, IMAGE_WIDTH - x))
@@ -207,8 +206,22 @@ def _generate_fonts(device: DeviceConfig) -> str:
                     safe_path = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
                     safe_id = f"img_{safe_path}_{width}x{height}"
                     
-                    # Store path with dimensions for resize, keyed by (path, width, height)
-                    image_paths[(path, width, height)] = {"id": safe_id, "width": width, "height": height}
+                    # Collect properties
+                    img_type = props.get("image_type", "BINARY").upper()
+                    dither = props.get("dither", "FLOYDSTEINBERG").upper()
+                    transparency = props.get("transparency", "").lower()
+                    
+                    # Store path with dimensions and config
+                    # Key by path+width+height to allow same image at different sizes
+                    key = (path, width, height)
+                    image_paths[key] = {
+                        "id": safe_id,
+                        "width": width,
+                        "height": height,
+                        "type": img_type,
+                        "dither": dither,
+                        "transparency": transparency
+                    }
     
     # Base fonts - use selected font family for all standard sizes
     font_lines = [
@@ -286,12 +299,22 @@ def _generate_fonts(device: DeviceConfig) -> str:
         result += "\n\n\nimage:"
         for (path, width, height), img_data in sorted(image_paths.items()):
             img_id = img_data["id"]
-            # width and height are already in the key/data
+            img_type = img_data.get("type", "BINARY")
+            dither = img_data.get("dither", "FLOYDSTEINBERG")
+            transparency = img_data.get("transparency", "")
+            
             result += f"\n  - file: \"{path}\""
             result += f"\n    id: {img_id}"
             result += f"\n    resize: {width}x{height}"
-            result += "\n    type: BINARY"
-            result += "\n    dither: FLOYDSTEINBERG"
+            result += f"\n    type: {img_type}"
+            
+            # Dither only applies to BINARY and GRAYSCALE
+            if img_type in ("BINARY", "GRAYSCALE"):
+                result += f"\n    dither: {dither}"
+            
+            # Transparency
+            if transparency:
+                result += f"\n    transparency: {transparency}"
     
     return result
 
@@ -567,24 +590,52 @@ def _generate_graphs(device: DeviceConfig) -> str:
         safe_id = f"graph_{widget.id}".replace("-", "_")
         
         lines.append(f"  - id: {safe_id}")
-        lines.append(f"    sensor: {entity_id}")
         lines.append(f"    duration: {props.get('duration', '1h')}")
         lines.append(f"    width: {int(props.get('width', 100))}")
         lines.append(f"    height: {int(props.get('height', 50))}")
         
-        # Optional grid
-        if "x_grid" in props:
+        # Optional border (default true in ESPHome, but we allow control)
+        if "border" in props:
+            lines.append(f"    border: {str(props['border']).lower()}")
+
+        # Optional grid settings
+        if props.get("x_grid"):
             lines.append(f"    x_grid: {props['x_grid']}")
-        if "y_grid" in props:
+        if props.get("y_grid"):
             lines.append(f"    y_grid: {props['y_grid']}")
+
+        # Y-axis range settings
+        if props.get("max_range"):
+            lines.append(f"    max_range: {props['max_range']}")
+        if props.get("min_range"):
+            lines.append(f"    min_range: {props['min_range']}")
+        if props.get("max_value"):
+            lines.append(f"    max_value: {props['max_value']}")
+        if props.get("min_value"):
+            lines.append(f"    min_value: {props['min_value']}")
             
-        # Traces
+        # Traces (currently only one supported by editor UI)
         lines.append("    traces:")
         lines.append(f"      - sensor: {entity_id}")
-        if "line_type" in props:
+        
+        # Trace styling
+        if props.get("line_type"):
             lines.append(f"        line_type: {props['line_type']}")
-        if "line_thickness" in props:
+        if props.get("line_thickness"):
             lines.append(f"        line_thickness: {props['line_thickness']}")
+        if props.get("color"):
+            # Map color name to ID if possible, or use raw value if it's a defined color id
+            # For now, assuming standard colors or user-defined IDs
+            color_val = props['color']
+            if color_val in ["black", "white"]:
+                 # ESPHome graph colors usually refer to a color ID defined in color: section
+                 # We might need to define these if they don't exist, or use a default.
+                 # For e-paper, it's usually just black/white.
+                 pass 
+            else:
+                 lines.append(f"        color: {color_val}")
+        if props.get("continuous"):
+            lines.append(f"        continuous: true")
 
     return "\n".join(lines)
 
@@ -836,8 +887,9 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
         font_family = props.get("font_family") or "Inter"
         color_prop = (props.get("color") or "black").lower()
         font_style = props.get("font_style") or "regular"
-        # Add marker comment for parser with all properties including font_family
-        content.append(f'{indent}// widget:text id:{widget.id} type:text x:{x} y:{y} w:{w} h:{h} text:"{text}" font_size:{font_size} font_family:{font_family} color:{color_prop} font_style:{font_style}')
+        font_weight = int(props.get("font_weight", 400) or 400)
+        # Add marker comment for parser with all properties including font_family and font_weight
+        content.append(f'{indent}// widget:text id:{widget.id} type:text x:{x} y:{y} w:{w} h:{h} text:"{text}" font_size:{font_size} font_family:{font_family} font_weight:{font_weight} color:{color_prop} font_style:{font_style}')
         content.append(f'{indent}it.print({x}, {y}, {font}, {fg}, "{text}");')
         _wrap_with_condition(dst, indent, widget, content)
         return
@@ -1198,47 +1250,32 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
             content.append(f'{indent}// widget:graph id:{widget.id} type:graph x:{x} y:{y} w:{w} h:{h} duration:"{duration}" border:{border} grid:{grid} color:{color_prop} (no entity)')
             content.append(f'{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});')
             content.append(f'{indent}it.line({x}, {y}+{h}, {x}+{w}, {y}, {fg});')
-            # No path configured - show placeholder
-            content.append(f'{indent}// widget:image id:{widget.id} type:image x:{x} y:{y} w:{w} h:{h}')
-            content.append(f'{indent}// No image path configured')
-            content.append(f'{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});')
             _wrap_with_condition(dst, indent, widget, content)
             return
-        
-        # Generate safe ID from path (same logic as in _generate_fonts)
-        safe_path = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
-        safe_id = f"img_{safe_path}_{w}x{h}"
-        
-        # Check if image should be inverted
-        invert = bool(props.get("invert"))
-        
-        # Add marker comment for parser
-        content.append(f'{indent}// widget:image id:{widget.id} type:image x:{x} y:{y} w:{w} h:{h} path:"{path}" invert:{invert}')
-        
-        if invert:
-            content.append(f'{indent}it.image({x}, {y}, id({safe_id}), COLOR_OFF, COLOR_ON);')
-        else:
-            content.append(f'{indent}it.image({x}, {y}, id({safe_id}));')
-        _wrap_with_condition(dst, indent, widget, content)
-        return
 
-    # Remote / online image (puppet) widget - rendered from online_image id
-    if wtype == "online_image":
-        props_url = (props.get("url") or "").strip()
-        safe_id = f"img_{widget.id}".replace("-", "_")
-        # Marker comment
-        content.append(f'{indent}// widget:online_image id:{widget.id} type:online_image x:{x} y:{y} w:{w} h:{h} url:"{props_url}"')
-        content.append(f'{indent}it.image({x}, {y}, id({safe_id}));')
-        _wrap_with_condition(dst, indent, widget, content)
-        return
-
-    # Fallback / unknown
+    # Image widget
     if wtype == "image":
-        image_id = (props.get("image_id") or "").strip()
-        if image_id:
-            dst.append(f"{indent}it.image({x}, {y}, id({image_id}));")
+        path = props.get("path", "").strip()
+        if path:
+            # Generate safe ID from path (same logic as in _generate_fonts)
+            safe_path = path.replace("/", "_").replace(".", "_").replace("-", "_").replace(" ", "_")
+            safe_id = f"img_{safe_path}_{w}x{h}"
+            
+            # Check if image should be inverted
+            invert = bool(props.get("invert"))
+            
+            # Add marker comment for parser
+            content.append(f'{indent}// widget:image id:{widget.id} type:image x:{x} y:{y} w:{w} h:{h} path:"{path}" invert:{invert}')
+            
+            if invert:
+                content.append(f'{indent}it.image({x}, {y}, id({safe_id}), COLOR_OFF, COLOR_ON);')
+            else:
+                content.append(f'{indent}it.image({x}, {y}, id({safe_id}));')
         else:
-            dst.append(f"{indent}// image widget missing image_id at ({x},{y})")
+            content.append(f'{indent}// widget:image id:{widget.id} type:image x:{x} y:{y} w:{w} h:{h} (no path)')
+            content.append(f'{indent}it.rectangle({x}, {y}, {w}, {h}, {fg});')
+            
+        _wrap_with_condition(dst, indent, widget, content)
         return
 
     # History widget: placeholder visualization; requires precomputed entity

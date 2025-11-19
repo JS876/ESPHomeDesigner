@@ -373,6 +373,7 @@
       box-sizing: border-box;
       overflow-y: auto;
       position: relative;
+      max-height: 100%;
     }
 
     .canvas-grid {
@@ -3962,7 +3963,7 @@
             scheduleSnippetUpdate();
           });
 
-          addLabeledInput("Decimals (-1 for string)", "number", widget.props.precision != null ? widget.props.precision : -1, (v) => {
+          addLabeledInput("Precision (decimals)", "number", widget.props.precision != null ? widget.props.precision : -1, (v) => {
             widget.props.precision = parseInt(v || "-1", 10);
             renderCanvas();
             scheduleSnippetUpdate();
@@ -4923,9 +4924,42 @@
 
               lines.push(`        // widget:graph id:${w.id} type:graph x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity:${entityId} duration:${duration} border:${borderEnabled} color:${color}`);
               if (entityId) {
-                lines.push(`        it.graph(${w.x}, ${w.y}, id(${graphId}), ${colorStyle});`);
+                // Draw dummy graph for preview
+                ctx.beginPath();
+                ctx.strokeStyle = colorStyle;
+                ctx.lineWidth = widget.props.line_thickness || 1;
+
+                // Draw axes
+                ctx.moveTo(x, y + h);
+                ctx.lineTo(x + w, y + h);
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, y + h);
+                ctx.stroke();
+
+                // Draw dummy data line
+                ctx.beginPath();
+                const points = 20;
+                for (let i = 0; i <= points; i++) {
+                  const px = x + (w * i) / points;
+                  // Generate a sine wave pattern
+                  const py = y + h / 2 + (Math.sin(i * 0.5) * h / 3);
+                  if (i === 0) ctx.moveTo(px, py);
+                  else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+
+                // Draw label
+                ctx.fillStyle = colorStyle;
+                ctx.font = "10px sans-serif";
+                ctx.fillText(`Graph: ${entityId}`, x + 2, y + 12);
               } else {
-                lines.push(`        // Graph widget needs entity_id configured to display`);
+                // Placeholder box
+                ctx.strokeStyle = colorStyle;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, y, w, h);
+                ctx.fillStyle = colorStyle;
+                ctx.font = "12px sans-serif";
+                ctx.fillText("Graph (no entity)", x + 5, y + 20);
               }
             } else if (t === "line") {
               const colorProp = p.color || "black";

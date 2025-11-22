@@ -135,13 +135,15 @@ class ReTerminalDashboardOptionsFlow(config_entries.OptionsFlow):
             "Devices and layouts are managed via the dashboard editor and HTTP API."
         )
 
+        # Default to True if not set
+        show_in_sidebar = self._config_entry.options.get("show_in_sidebar", True)
+
         if user_input is not None:
-            # Nothing to store yet; just close.
             return self.async_create_entry(title="", data=user_input)
 
         schema = vol.Schema(
             {
-                vol.Optional("info", default=info_text): str,
+                vol.Optional("show_in_sidebar", default=show_in_sidebar): bool,
             }
         )
 
@@ -150,5 +152,6 @@ class ReTerminalDashboardOptionsFlow(config_entries.OptionsFlow):
             data_schema=schema,
             description_placeholders={
                 "dashboard_url": dashboard_url,
+                "info_text": info_text,
             },
         )

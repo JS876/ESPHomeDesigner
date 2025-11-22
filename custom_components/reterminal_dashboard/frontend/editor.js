@@ -813,6 +813,103 @@ let selectedWidgetId = null;
 let deviceName = "reTerminal E1001";
 let currentPageSettingsTarget = null;
 
+// --- Undo/Redo & Clipboard ---
+let historyStack = [];
+let historyIndex = -1;
+let clipboardWidget = null;
+
+function recordHistory() {
+    // Deep copy pages
+    const state = JSON.parse(JSON.stringify(pages));
+
+    // Check if identical to last state to prevent "phantom" steps
+    if (historyIndex >= 0) {
+        const lastState = historyStack[historyIndex];
+        if (JSON.stringify(lastState) === JSON.stringify(state)) {
+            return;
+        }
+    }
+
+    // Remove any future history if we are in the middle of the stack
+    if (historyIndex < historyStack.length - 1) {
+        historyStack = historyStack.slice(0, historyIndex + 1);
+    }
+
+    historyStack.push(state);
+    historyIndex++;
+
+    // Limit stack size
+    if (historyStack.length > 50) {
+        historyStack.shift();
+        historyIndex--;
+    }
+    // console.log("History recorded. Index:", historyIndex);
+}
+
+function undo() {
+    if (historyIndex > 0) {
+        historyIndex--;
+        const state = historyStack[historyIndex];
+        pages = JSON.parse(JSON.stringify(state));
+        rebuildWidgetsIndex();
+        // Ensure currentPageIndex is valid
+        if (currentPageIndex >= pages.length) currentPageIndex = pages.length - 1;
+        selectedWidgetId = null;
+        renderPagesSidebar();
+        renderCanvas();
+        renderPropertiesPanel();
+        scheduleSnippetUpdate();
+    }
+}
+
+function redo() {
+    if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        const state = historyStack[historyIndex];
+        pages = JSON.parse(JSON.stringify(state));
+        rebuildWidgetsIndex();
+        if (currentPageIndex >= pages.length) currentPageIndex = pages.length - 1;
+        selectedWidgetId = null;
+        renderPagesSidebar();
+        renderCanvas();
+        renderPropertiesPanel();
+        scheduleSnippetUpdate();
+    }
+}
+
+function copyWidget() {
+    if (!selectedWidgetId) return;
+    const widget = widgetsById.get(selectedWidgetId);
+    if (widget) {
+        clipboardWidget = JSON.parse(JSON.stringify(widget));
+        // console.log("Copied widget:", clipboardWidget);
+    }
+}
+
+function pasteWidget() {
+    if (!clipboardWidget) return;
+    const page = getCurrentPage();
+    if (!page) return;
+
+    const newWidget = JSON.parse(JSON.stringify(clipboardWidget));
+    newWidget.id = "w_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
+    newWidget.x += 10;
+    newWidget.y += 10;
+
+    // Keep within bounds
+    if (newWidget.x > CANVAS_WIDTH - newWidget.width) newWidget.x = Math.max(0, CANVAS_WIDTH - newWidget.width);
+    if (newWidget.y > CANVAS_HEIGHT - newWidget.height) newWidget.y = Math.max(0, CANVAS_HEIGHT - newWidget.height);
+
+    page.widgets.push(newWidget);
+    rebuildWidgetsIndex();
+    selectedWidgetId = newWidget.id;
+
+    renderCanvas();
+    renderPropertiesPanel();
+    scheduleSnippetUpdate();
+    recordHistory();
+}
+
 function initDefaultLayout() {
     pages = [
         {
@@ -827,6 +924,8 @@ function initDefaultLayout() {
     renderPagesSidebar();
     renderCanvas();
     renderPropertiesPanel();
+    recordHistory();
+    resizeCanvas();
 }
 
 initDefaultLayout();
@@ -855,7 +954,70 @@ function applyOrientation(orientation) {
     canvasEl.style.width = CANVAS_WIDTH + "px";
     canvasEl.style.height = CANVAS_HEIGHT + "px";
     renderCanvas();
+    resizeCanvas();
 }
+
+function resizeCanvas() {
+    const canvasEl = document.getElementById("canvas");
+    const container = document.querySelector(".canvas-area");
+    if (!canvasEl || !container) return;
+
+    // Disable transitions to prevent layout measurement issues
+    canvasEl.style.transition = "none";
+
+    // Reset transform to get accurate container dimensions
+    canvasEl.style.transform = "none";
+    canvasEl.style.marginLeft = "0";
+    canvasEl.style.marginTop = "0";
+    canvasEl.style.marginBottom = "0";
+
+    const padding = 20;
+    const toolbarHeight = 30;
+    const availWidth = container.clientWidth - padding;
+    const availHeight = container.clientHeight - padding - toolbarHeight;
+
+    const scaleX = availWidth / CANVAS_WIDTH;
+    const scaleY = availHeight / CANVAS_HEIGHT;
+
+    let scale = Math.min(scaleX, scaleY, 1);
+
+    // Apply scale with top-left origin
+    canvasEl.style.transform = `scale(${scale})`;
+    canvasEl.style.transformOrigin = "top left";
+
+    // Calculate centering margins
+    const scaledWidth = CANVAS_WIDTH * scale;
+    const scaledHeight = CANVAS_HEIGHT * scale;
+
+    const marginLeft = (container.clientWidth - scaledWidth) / 2;
+
+    // Apply margins
+    canvasEl.style.marginLeft = `${Math.max(0, marginLeft)}px`;
+
+    const heightDiff = CANVAS_HEIGHT - scaledHeight;
+    if (heightDiff > 0) {
+        canvasEl.style.marginBottom = `-${heightDiff}px`;
+    }
+
+    // Restore transitions after a brief delay
+    requestAnimationFrame(() => {
+        canvasEl.style.transition = "";
+    });
+}
+
+// Use ResizeObserver instead of window resize to prevent potential loops
+const resizeObserver = new ResizeObserver(entries => {
+    // Debounce slightly or just call
+    window.requestAnimationFrame(resizeCanvas);
+});
+
+const canvasArea = document.querySelector(".canvas-area");
+if (canvasArea) {
+    resizeObserver.observe(canvasArea);
+}
+
+// Call initially
+setTimeout(resizeCanvas, 100);
 
 function rebuildWidgetsIndex() {
     widgetsById = new Map();
@@ -1081,6 +1243,7 @@ function createWidget(type) {
     renderCanvas();
     renderPropertiesPanel();
     scheduleSnippetUpdate();
+    recordHistory();
 }
 
 function onWidgetPaletteClick(e) {
@@ -3912,6 +4075,7 @@ function deleteWidget(widgetId) {
     renderCanvas();
     renderPropertiesPanel();
     scheduleSnippetUpdate();
+    recordHistory();
 }
 
 function deletePage(pageIndex) {
@@ -3934,6 +4098,7 @@ function deletePage(pageIndex) {
     renderCanvas();
     renderPropertiesPanel();
     scheduleSnippetUpdate();
+    recordHistory();
 }
 
 window.addEventListener("keydown", (ev) => {
@@ -3943,6 +4108,33 @@ window.addEventListener("keydown", (ev) => {
         }
         ev.preventDefault();
         deleteWidget(selectedWidgetId);
+        return;
+    }
+
+    // Copy: Ctrl+C
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "c") {
+        if (ev.target.tagName === "INPUT" || ev.target.tagName === "TEXTAREA") return;
+        ev.preventDefault();
+        copyWidget();
+    }
+
+    // Paste: Ctrl+V
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "v") {
+        if (ev.target.tagName === "INPUT" || ev.target.tagName === "TEXTAREA") return;
+        ev.preventDefault();
+        pasteWidget();
+    }
+
+    // Undo: Ctrl+Z
+    if ((ev.ctrlKey || ev.metaKey) && ev.key === "z" && !ev.shiftKey) {
+        ev.preventDefault();
+        undo();
+    }
+
+    // Redo: Ctrl+Y or Ctrl+Shift+Z
+    if ((ev.ctrlKey || ev.metaKey) && (ev.key === "y" || (ev.key === "z" && ev.shiftKey))) {
+        ev.preventDefault();
+        redo();
     }
 });
 
@@ -3998,6 +4190,7 @@ function onMouseMove(ev) {
 }
 
 function onMouseUp() {
+    const wasDragging = !!dragState;
     dragState = null;
     clearSnapGuides();
     window.removeEventListener("mousemove", onMouseMove);
@@ -4005,6 +4198,7 @@ function onMouseUp() {
     renderCanvas();
     renderPropertiesPanel();
     scheduleSnippetUpdate();
+    if (wasDragging) recordHistory();
 }
 
 function getPagesPayload() {
@@ -4026,6 +4220,7 @@ function getPagesPayload() {
 
 function generateSnippetLocally() {
     const payload = getPagesPayload();
+    // Ensure we are using the latest pages from the payload, which reflects the current state
     const pagesLocal = payload.pages || [];
     const lines = [];
 
@@ -4937,7 +5132,35 @@ copySnippetBtn.onclick = async () => {
 };
 
 fullscreenSnippetBtn.onclick = () => {
-    snippetFullscreenContent.textContent = snippetBox.value || "";
+    // Use a textarea for editing if it doesn't exist, otherwise update its value
+    let textarea = snippetFullscreenContent.querySelector("textarea");
+    if (!textarea) {
+        snippetFullscreenContent.innerHTML = ""; // Clear existing content
+        textarea = document.createElement("textarea");
+        textarea.style.width = "100%";
+        textarea.style.height = "calc(100vh - 100px)";
+        textarea.style.fontFamily = "monospace";
+        textarea.style.padding = "10px";
+        textarea.style.boxSizing = "border-box";
+        snippetFullscreenContent.appendChild(textarea);
+
+        // Add a save/update button to the modal footer if not present
+        const footer = snippetFullscreenModal.querySelector(".modal-footer");
+        if (footer && !footer.querySelector("#fullscreenUpdateBtn")) {
+            const updateBtn = document.createElement("button");
+            updateBtn.id = "fullscreenUpdateBtn";
+            updateBtn.className = "btn btn-primary";
+            updateBtn.textContent = "Update Layout from YAML";
+            updateBtn.style.marginRight = "10px";
+            updateBtn.onclick = () => {
+                snippetBox.value = textarea.value;
+                updateLayoutBtn.click(); // Trigger the existing update logic
+                snippetFullscreenModal.classList.add("hidden");
+            };
+            footer.insertBefore(updateBtn, footer.firstChild);
+        }
+    }
+    textarea.value = snippetBox.value || "";
     snippetFullscreenModal.classList.remove("hidden");
 };
 

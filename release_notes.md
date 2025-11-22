@@ -1,20 +1,22 @@
-# Release Notes - v0.4.2
+# Release Notes
 
-## 🚀 Enhancements
+## v0.4.3
 
-- **Graph Widget Automation**:
-  - Automatically populates `min_value` and `max_value` settings when a sensor with `min`/`max` attributes or `%` unit is selected.
-  - New graph widgets now default to `continuous: true` for smoother lines.
-- **Circle Aspect Ratio**:
-  - The editor now enforces a 1:1 aspect ratio for Circle widgets during resize, preventing the creation of unsupported ellipses.
+### New Features
+-   **Copy/Paste**: Added support for copying and pasting widgets using `Ctrl+C` and `Ctrl+V`. Pasted widgets are automatically offset for visibility.
+-   **Undo/Redo**: Implemented Undo (`Ctrl+Z`) and Redo (`Ctrl+Y` or `Ctrl+Shift+Z`) functionality for widget operations (move, resize, add, delete, property changes).
+-   **Fullscreen YAML Editing**: The fullscreen YAML view is now editable and includes an "Update Layout from YAML" button to apply changes directly.
+-   **Sidebar Visibility Control**: Added a configuration option to show or hide the integration in the Home Assistant sidebar.
+-   **Canvas Responsiveness**: The editor canvas now dynamically scales and centers to fit smaller screens, ensuring the entire layout is visible without scrolling.
 
-## 🐛 Bug Fixes
+### Bug Fixes
+-   **Ghost Pages**: Fixed an issue where deleted pages would persist in the generated YAML snippet.
+-   **Undo/Redo Stability**: Fixed issues where Undo would jump back multiple steps or become unresponsive due to duplicate history states or missing drag state capture.
+-   **Graph Persistence**: Fixed `Continuous: true` setting not saving correctly.
+-   **Page Jump**: Fixed editor jumping to the first page after layout updates.
+-   **Weather Text Color**: Fixed weather widget text color reverting to black.
 
-- **Page Jump Fix**: Resolved an issue where the editor would reset to the first page after updating the layout from YAML. It now preserves your current page view.
-- **Graph Persistence**: Fixed a bug where the `Continuous` line setting for graphs was not saving correctly to YAML. It now persists round-trip.
-- **Weather Text Color**: Fixed an issue where the text color of Weather widgets would revert to black after a layout update.
-
-## 📝 Notes
-
-- **Ellipse Support**: Native ellipse drawing is not supported by the ESPHome display component. A Proof of Concept for custom lambda-based ellipse drawing is available in the documentation if needed.
-- **Dithered Area Charts**: Native support for filled/dithered area charts is currently unavailable in ESPHome.
+## v0.4.2
+-   **Graph Widget**: Added automated sensor info (min/max) based on Home Assistant entity attributes.
+-   **Circle Widget**: Enforced 1:1 aspect ratio during resize to prevent distortion.
+-   **Manifest**: Version bump.

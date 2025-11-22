@@ -142,6 +142,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("%s: Setting up config entry %s", DOMAIN, entry.entry_id)
     hass.data.setdefault(DOMAIN, {})
 
+    entry.async_on_unload(entry.add_update_listener(update_listener))
+
     # Initialize shared storage once
     if "storage" not in hass.data[DOMAIN]:
         storage = DashboardStorage(
@@ -173,23 +175,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.http.register_view(ReTerminalDashboardStaticView(hass))
     _LOGGER.info("%s: Static view registered at /reterminal-dashboard/static/{filename}", DOMAIN)
 
-    # Register the sidebar panel
-    try:
-        from homeassistant.components import frontend
-        frontend.async_register_built_in_panel(
-            hass,
-            component_name="iframe",  # Use iframe panel type to load our view
-            sidebar_title="reTerminal",
-            sidebar_icon="mdi:tablet-dashboard",
-            frontend_url_path="reterminal-dashboard",
-            config={"url": "/reterminal-dashboard"},
-            require_admin=True,
-        )
-        _LOGGER.info("%s: Sidebar panel registered", DOMAIN)
-    except Exception as e:
-        _LOGGER.warning("%s: Failed to register sidebar panel: %s", DOMAIN, e)
+    # Register the sidebar panel if enabled
+    if entry.options.get("show_in_sidebar", True):
+        try:
+            from homeassistant.components import frontend
+            frontend.async_register_built_in_panel(
+                hass,
+                component_name="iframe",  # Use iframe panel type to load our view
+                sidebar_title="reTerminal",
+                sidebar_icon="mdi:tablet-dashboard",
+                frontend_url_path="reterminal-dashboard",
+                config={"url": "/reterminal-dashboard"},
+                require_admin=True,
+            )
+            _LOGGER.info("%s: Sidebar panel registered", DOMAIN)
+        except Exception as e:
+            _LOGGER.warning("%s: Failed to register sidebar panel: %s", DOMAIN, e)
+    else:
+        _LOGGER.info("%s: Sidebar panel disabled by config", DOMAIN)
 
     return True
+
+
+async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update listener."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -201,6 +211,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if len(entries) <= 1:
         async_unregister_services(hass)
         _LOGGER.debug("%s: Unregistered services (last entry unloaded)", DOMAIN)
+    
+    # Remove the sidebar panel
+    try:
+        from homeassistant.components import frontend
+        frontend.async_remove_panel(hass, "reterminal-dashboard")
+    except Exception:
+        pass
 
     # Keep storage in memory; if you want to fully unload, you could:
     # hass.data[DOMAIN].pop("storage", None) when last entry is removed.

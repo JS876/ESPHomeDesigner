@@ -633,11 +633,6 @@
         max-height: 30vh;
         min-height: 150px;
       }
-
-      .canvas.portrait {
-        transform: scale(0.7);
-        transform-origin: top center;
-      }
     }
 
     @media (max-height: 700px) {
@@ -664,16 +659,6 @@
     }
 
     @media (max-width: 1400px) {
-      .canvas {
-        transform: scale(0.8);
-        transform-origin: top center;
-      }
-
-      .canvas.portrait {
-        transform: scale(0.6);
-        transform-origin: top center;
-      }
-
       .canvas-area {
         max-width: 650px;
       }

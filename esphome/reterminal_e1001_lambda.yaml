@@ -48,8 +48,8 @@
 #
 # IMPORTANT: Add this on_boot section to initialize the display!
 esphome:
-  name: your-device-name
-  friendly_name: Your Device Name
+  name: reterminal-e1001
+  friendly_name: reTerminal E1001
   on_boot:
     priority: 600
     then:
@@ -125,13 +125,13 @@ sensor:
   - platform: sht4x
     temperature:
       name: "reTerminal Onboard Temperature"
-      id: onboard_temperature
+      id: sensor_reterminal_e1001_reterminal_onboard_temperature
       accuracy_decimals: 2
       filters:
         - round: 2
     humidity:
       name: "reTerminal Onboard Humidity"
-      id: onboard_humidity
+      id: sensor_reterminal_e1001_reterminal_onboard_humidity
       accuracy_decimals: 2
       filters:
         - round: 2

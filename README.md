@@ -93,6 +93,11 @@ Done! Your custom dashboard is now running on the reTerminal.
   - Shows percentage text below icon
 - **Shapes** - Rectangles, filled rectangles, circles, filled circles, lines
   - Gray color renders as dithered pattern for visual distinction
+- **Graph** - Plot sensor history over time
+  - Configurable duration (1h to 30d)
+  - Customizable line style (solid, dashed, dotted), thickness, and color
+  - Optional X/Y grid lines with presets
+  - Auto-scaling Y-axis based on sensor min/max attributes
 - **Image** - Display photos and images with optional color inversion
   - Widget frame size sets ESPHome `resize:` parameter automatically
   - Images are resized during compilation (quality preserved with FLOYDSTEINBERG dithering)
@@ -175,7 +180,6 @@ This is a passion project built to solve a real problem. Found a bug? Have an id
 
 **Planned features:**
 - Weather card widgets
-- Graph/chart widgets
 - Color e-ink support
 - More device types (other ESP32-based e-paper displays)
 

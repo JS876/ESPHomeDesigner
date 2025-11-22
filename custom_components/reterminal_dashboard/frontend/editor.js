@@ -57,8 +57,13 @@ async function fetchEntityStates() {
         const newCache = {};
         for (const entity of entities) {
             if (entity.entity_id && entity.state !== undefined) {
-                const stateValue = entity.unit ? `${entity.state} ${entity.unit}` : entity.state;
-                newCache[entity.entity_id] = stateValue;
+                const formatted = entity.unit ? `${entity.state} ${entity.unit}` : entity.state;
+                newCache[entity.entity_id] = {
+                    state: entity.state,
+                    unit: entity.unit,
+                    attributes: entity.attributes || {},
+                    formatted: formatted
+                };
             }
         }
         entityStatesCache = newCache;
@@ -75,7 +80,13 @@ async function fetchEntityStates() {
 }
 
 function getEntityState(entityId) {
-    return entityStatesCache[entityId] || null;
+    const entry = entityStatesCache[entityId];
+    return entry ? entry.formatted : null;
+}
+
+function getEntityAttributes(entityId) {
+    const entry = entityStatesCache[entityId];
+    return entry ? entry.attributes : null;
 }
 
 async function loadHaEntitiesIfNeeded() {
@@ -347,7 +358,7 @@ function parseSnippetYamlOffline(yamlText) {
                         y_grid: p.y_grid || "",
                         line_thickness: parseInt(p.line_thickness || 3, 10),
                         line_type: p.line_type || "SOLID",
-                        continuous: (p.continuous === "true" || p.continuous === "1"),
+                        continuous: (p.continuous !== "false" && p.continuous !== "0"),
                         min_value: p.min_value || "",
                         max_value: p.max_value || "",
                         min_range: p.min_range || "",
@@ -519,7 +530,10 @@ function applyImportedLayout(layout) {
     if (settings.sleep_start_hour === undefined) settings.sleep_start_hour = 0;
     if (settings.sleep_end_hour === undefined) settings.sleep_end_hour = 5;
 
-    currentPageIndex = 0;
+    // Preserve current page index if possible, otherwise reset to 0
+    if (currentPageIndex >= pages.length) {
+        currentPageIndex = 0;
+    }
     rebuildWidgetsIndex();
     applyOrientation(settings.orientation || "landscape");
     renderPagesSidebar();
@@ -1054,7 +1068,7 @@ function createWidget(type) {
         widget.props.y_grid = "";  // e.g., "1.0"
         widget.props.line_thickness = 3;
         widget.props.line_type = "SOLID";  // SOLID, DOTTED, DASHED
-        widget.props.continuous = false;
+        widget.props.continuous = true;
         widget.props.min_value = "";
         widget.props.max_value = "";
         widget.props.min_range = "";
@@ -3972,6 +3986,11 @@ function onMouseMove(ev) {
                 const newSize = Math.max(8, Math.min(widget.width, widget.height));
                 props.size = Math.round(newSize);
             }
+        } else if (wtype === "shape_circle") {
+            // Enforce 1:1 aspect ratio
+            const size = Math.max(widget.width, widget.height);
+            widget.width = size;
+            widget.height = size;
         }
     }
 
@@ -4764,6 +4783,17 @@ function openEntityPickerForWidget(widget, inputEl, callback) {
                     widget.entity_id = e.entity_id;
                     widget.title = e.name || e.entity_id || "";
                     inputEl.value = widget.entity_id;
+
+                    // Automate Graph settings based on attributes
+                    if (widget.type === "graph" && e.attributes) {
+                        const attrs = e.attributes;
+                        if (attrs.unit_of_measurement === "%") {
+                            if (!widget.props.min_value) widget.props.min_value = "0";
+                            if (!widget.props.max_value) widget.props.max_value = "100";
+                        }
+                        if (attrs.min !== undefined && !widget.props.min_value) widget.props.min_value = String(attrs.min);
+                        if (attrs.max !== undefined && !widget.props.max_value) widget.props.max_value = String(attrs.max);
+                    }
                     if (Object.keys(entityStatesCache).length === 0) {
                         fetchEntityStates();
                     }

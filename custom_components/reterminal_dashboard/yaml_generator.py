@@ -1045,7 +1045,7 @@ def _append_widget_render(dst: List[str], indent: str, widget: WidgetConfig) -> 
             
             # Add marker comment for parser with font sizes and font_family
             is_local = "true" if props.get("is_local_sensor") else "false"
-            content.append(f'{indent}// widget:sensor_text id:{widget.id} type:sensor_text x:{x} y:{y} w:{w} h:{h} ent:{entity_id} title:"{label}" label_font:{label_font_size} value_font:{value_font_size} format:{value_format} font_family:{font_family} font_weight:{font_weight} precision:{precision} local:{is_local}')
+            content.append(f'{indent}// widget:sensor_text id:{widget.id} type:sensor_text x:{x} y:{y} w:{w} h:{h} ent:{entity_id} title:"{label}" label_font:{label_font_size} value_font:{value_font_size} format:{value_format} font_family:{font_family} font_weight:{font_weight} precision:{precision} local:{is_local} color:{base_color}')
             
             # Determine value expression and format string
             unit = props.get("unit", "")

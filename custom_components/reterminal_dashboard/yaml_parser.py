@@ -102,6 +102,8 @@ class ParsedWidget:
     date_font_size: int | None = None
     # Local sensor flag
     is_local_sensor: bool = False
+    # Graph properties
+    continuous: bool = True
 
 
 def yaml_to_layout(snippet: str) -> DeviceConfig:
@@ -209,6 +211,9 @@ def yaml_to_layout(snippet: str) -> DeviceConfig:
             
             # Local sensor flag
             if pw.is_local_sensor: props["is_local_sensor"] = True
+            
+            # Graph properties
+            if pw.continuous is not None: props["continuous"] = pw.continuous
 
             # Handle special cases for text/icon size mapping if needed
             if pw.type == "text" and "font_size" not in props and "size" in props:
@@ -458,6 +463,9 @@ def _parse_widget_line(line: str) -> ParsedWidget | None:
         show_label = parse_bool(meta.get("show_label"))
         show_percentage = parse_bool(meta.get("show_percentage")) or parse_bool(meta.get("show_pct"))
         is_local_sensor = parse_bool(meta.get("local"))
+        continuous = parse_bool(meta.get("continuous"))
+        if continuous is None:
+            continuous = True
 
         return ParsedWidget(
             id=wid,
@@ -493,6 +501,7 @@ def _parse_widget_line(line: str) -> ParsedWidget | None:
             time_font_size=time_font_size,
             date_font_size=date_font_size,
             is_local_sensor=is_local_sensor or False,
+            continuous=continuous,
         )
 
     # Pattern 2: simple printf (VERY conservative)

@@ -2,7 +2,119 @@
 
 
 
+## v0.6.0
+> [!NOTE]
+> This is a **major release** with significant architectural improvements, new widgets, and hardware support.
+
+### 🎉 Major Features
+
+#### Layout Manager
+- **Multi-Device Support**: Manage multiple e-ink devices from a single interface
+- **Export/Import Layouts**: Save and share your dashboard designs as files
+- Switch between devices seamlessly with persistent configurations
+
+#### Completely Redesigned UI
+- **Fresh Modern Interface**: Complete visual overhaul - easier on the eyes
+- **Light Mode**: New light theme for users who prefer a brighter workspace
+- **Canvas Controls**: Zoom in/out and recenter the canvas for precise editing
+
+#### Template-Free Workflow
+- **No More Templates Required**: The generator now produces a complete, standalone configuration
+- Simply paste the generated YAML below ESPHome's auto-generated sections
+- Makes setup child's play - no manual template merging needed
+
+#### New Widgets
+- **Quote / RSS Feed Widget**: Display inspirational quotes or RSS feed content
+  - RSS feed URL configuration with popular default (BrainyQuote)
+  - Optional author display, random quote selection
+  - Configurable refresh interval (15min to 24h)
+  - Word wrap, italic styling, full font customization
+  - **Zero configuration**: No `configuration.yaml` entries or Home Assistant sensors needed
+  - *Note: Functional but formatting not fully respected - unfinished feature*
+
+- **QR Code Widget**: Generate QR codes directly on your e-ink display
+  - Configurable content string (URLs, text, etc.)
+  - Four error correction levels (LOW, MEDIUM, QUARTILE, HIGH)
+  - Auto-scaling to fit widget dimensions
+
+- **Weather Forecast Widget**: Multi-day weather forecast display
+  - Shows upcoming weather conditions with dynamic icons
+  - Integrates with Home Assistant weather entities
+  - *Note: Requires a weather entity configured in Home Assistant*
+
+- **Vertical Lines**: Draw vertical lines (untested)
+
+### 📱 New Hardware Support
+
+#### reTerminal E1002 - Color E-Ink Display
+- **Full color e-paper support** for the Seeed Studio reTerminal E1002
+- Color rendering for all widgets and shapes
+- Same easy workflow as E1001 - just select your device type
+
+#### TRMNL (ESP32-C3)
+- **New device support**: TRMNL e-paper hardware now fully supported
+- Dedicated hardware template (`trmnl_lambda.yaml`)
+- Correct SPI and battery sensor configurations
+- Proper busy_pin logic
+
+> [!WARNING]
+> **Experimental Feature**: Online Image (remote URLs) widget is an initial implementation and may be buggy or broken. Use at your own discretion.
+
+### 🔧 Architecture Overhaul
+- **Modular Frontend Architecture**: Complete refactor of the monolithic `editor.js` (276KB) into a modular system:
+  - `yaml_export.js` - Clean YAML generation with per-widget handling
+  - `yaml_import.js` - Robust YAML parsing and import
+  - `canvas.js` - Canvas rendering and interaction
+  - `state.js` - Centralized application state management
+  - `properties.js` - Widget property panel generation
+  - `widget_factory.js` - Standardized widget creation
+  - `keyboard.js` - Keyboard shortcuts handling
+  - Improved maintainability and extensibility
+
+- **Feature-Based Widget System**: Backend now uses a `features/` directory with:
+  - Per-widget `schema.json` for property definitions
+  - Per-widget `render.js` for canvas preview rendering
+  - Standardized widget registration and discovery
+
+### 🐛 Bug Fixes
+
+#### Widget Rendering
+- **Line Widget**: Fixed length synchronization between canvas preview and e-ink display
+- **Line Widget**: Fixed drag resize functionality
+- **Rectangle Border**: Corrected `border-box` positioning discrepancy between canvas and e-ink
+- **Weather Forecast**: Fixed positioning at correct X/Y coordinates
+- **Graph Grid Lines**: Fixed `x_grid` values not generating correctly in YAML
+
+#### Sensor & Entity Handling
+- **Sensor ID Generation**: Fixed sensor ID stripping for `battery_icon`, `sensor_text`, `progress_bar`, and `weather_icon` widgets
+  - Correctly strips `sensor.` and `weather.` prefixes when generating ESPHome `id()` references
+- **Quote/RSS Widget**: Added WiFi connection check and startup delay for reliable fetching
+
+#### Font System
+- **Italic Font Support**: Fixed italic fonts not being correctly referenced in lambda code
+  - Text widgets now use `_italic` suffix (e.g., `font_roboto_900_100_italic`) when italic is enabled
+  - Quote RSS widget correctly references italic font IDs
+- **Font Validation**: Fixed `font_roboto_400_24` validation warning in battery_icon widget
+- **Italic Persistence**: Fixed `italic` property not persisting for `sensor_text` and `datetime` widgets after YAML update
+
+#### Device Settings & Persistence
+- **Device Name Sync**: Fixed device name changes not persisting in Device Settings modal and Manage Layouts list
+- **Device Settings Modal**: Fixed settings reverting upon re-opening
+
+#### YAML Generation
+- **Duplicate SPI Removal**: Fixed duplicate SPI configuration in generated YAML
+- **YAML Duplicate Fixes**: Various fixes for duplicate section generation
+
+### 🔄 Technical Improvements
+- **Frontend Feature Registry**: Dynamic widget type discovery and registration
+- **Schema-Driven Properties**: Widget properties now defined in JSON schemas
+- **Improved Error Handling**: Better error messages and AppState.notify integration
+- **Code Organization**: Clear separation between core, UI, IO, and utility modules
+
+---
+
 ## v0.5.0
+
 > [!WARNING]
 > **BREAKING CHANGE**: This version requires the **latest hardware template**.
 > Global settings have been moved to the template.

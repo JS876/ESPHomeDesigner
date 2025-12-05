@@ -49,7 +49,7 @@ Design your e-ink dashboard visually, click generate, flash it - done. No YAML w
 3. Restart Home Assistant
 4. Add the integration via **Settings** → **Devices & Services**
 
-### 3. Prepare Your reTerminal Hardware
+### 3. Prepare Your ESPHome Device
 
 **Important:** Copy the Material Design Icons font file first!
 
@@ -58,31 +58,28 @@ To your ESPHome: `/config/esphome/fonts/materialdesignicons-webfont.ttf`
 
 (Create the `fonts` folder if it doesn't exist)
 
-Then use the provided hardware template:
+Then create a new ESPHome device:
 
-1. Open `esphome/reterminal_e1001_lambda.yaml` in this repo
-2. Follow the step-by-step instructions in the template
-3. **Crucial:** You must add the `services:` block to your `api:` section (as shown in the template) for the buzzer to work
-4. Create a new ESPHome device and paste the hardware sections
-5. Flash the base config to your reTerminal
-
-The template includes all the hardware setup: display driver, buttons, buzzer, sensors, battery monitoring.
+1. Create a new device in ESPHome Dashboard
+2. Let ESPHome generate the base config (WiFi, API, OTA, etc.)
+3. Configure the correct ESP platform for your device (instructions included in the generated YAML comments)
 
 ### 4. Design Your Dashboard
 
 1. Open the integration at `/reterminal-dashboard` in Home Assistant
-2. Drag widgets onto the 800x480 canvas
-3. Add your sensors, weather entities, icons, shapes
-4. Create multiple pages with different refresh rates
-5. Click **"Generate Snippet"**
+2. Select your device type (E1001, E1002, TRMNL,...)
+3. Drag widgets onto the canvas
+4. Add your sensors, weather entities, icons, shapes
+5. Create multiple pages with different refresh rates
+6. Click **"Generate Snippet"**
 
 ### 5. Flash It
 
 1. Copy the generated YAML snippet
-2. Paste it at the bottom of your ESPHome config (below the hardware sections)
+2. Paste it below ESPHome's auto-generated sections in your device config
 3. Compile and flash via ESPHome
 
-Done! Your custom dashboard is now running on the reTerminal.
+Done! Your custom dashboard is now running on your device.
 
 ## Widget Types
 
@@ -124,16 +121,31 @@ Done! Your custom dashboard is now running on the reTerminal.
   - Images are resized during compilation (quality preserved with FLOYDSTEINBERG dithering)
 - **Online Image** - Fetch and display images from URLs
   - Useful for weather maps, camera feeds, or dynamic content
+- **Quote / RSS Feed** - Display inspirational quotes or RSS feed content
+  - Configurable RSS feed URL with popular defaults
+  - Random quote selection, author display, italic styling
+  - Adjustable refresh interval (15min to 24h)
+- **QR Code** - Generate QR codes directly on the display
+  - Configurable content string (URLs, text, etc.)
+  - Four error correction levels
+  - Auto-scaling to fit widget dimensions
+- **Weather Forecast** - Multi-day weather forecast display
+  - Shows upcoming weather conditions with icons
+  - Integrates with Home Assistant weather entities
 
 ## Features
 
 - **Visual Editor** - Drag-and-drop canvas with snap-to-grid, live entity state updates
+- **Layout Manager** - Manage multiple devices, export/import layouts as files
 - **Entity Picker** - Browse and search your actual HA entities with real-time preview
 - **Multi-Page Support** - Create up to 10 pages, each with custom refresh intervals
 - **Page Management** - Drag & drop to reorder pages in the sidebar
 - **Productivity Tools** - Copy/Paste (Ctrl+C/V), Undo/Redo (Ctrl+Z/Y), and Z-Index layering support
+- **Canvas Controls** - Zoom in/out and recenter for precise editing
+- **Light/Dark Mode** - Choose your preferred theme
 - **Hardware Integration** - Buttons, buzzer, temperature/humidity sensors exposed to HA
 - **Smart Generator** - Produces clean, additive YAML that doesn't conflict with your base config
+- **Template-Free Workflow** - No more manual template merging, just paste and go
 - **Live YAML Preview** - Select any widget to instantly highlight its corresponding code in the generated YAML snippet
 - **Round-Trip Editing** - Import existing ESPHome display code back into the editor
 - **Battery Management** - Voltage monitoring, battery level percentage, icon indicators
@@ -141,13 +153,15 @@ Done! Your custom dashboard is now running on the reTerminal.
 
 ## Technical Details
 
-The generator produces **additive YAML only** - it won't touch your WiFi, API, or OTA settings.
+The generator produces **complete, standalone YAML** - no templates needed!
 
-**What it generates:**
+**What it generates (everything you need):**
+- Hardware configuration: `esphome:`, `esp32:`, `psram:`, `i2c:`, `spi:`
+- Display driver and settings
 - `globals:` - Display page tracking, refresh intervals
-- `font:` - Dynamic font generation based on your widget sizes + Material Design Icons with automatic glyph collection
-- `image:` - Image definitions for photo/image widgets (BINARY type, FLOYDSTEINBERG dithering)
-- `online_image:` - Definitions for online image and puppet widgets
+- `font:` - Dynamic font generation based on your widget sizes + Material Design Icons
+- `image:` - Image definitions for photo/image widgets
+- `online_image:` - Definitions for online image widgets
 - `text_sensor:` - Home Assistant entities used in your widgets
 - `graph:` - Graph widget configurations
 - `button:` - Page navigation and refresh controls (exposed to HA)
@@ -155,10 +169,8 @@ The generator produces **additive YAML only** - it won't touch your WiFi, API, o
 - `deep_sleep:` - Power saving logic (if enabled)
 - `display:` - Lambda code that renders your layout
 
-**What you provide** (via the hardware template):
-- `esphome:`, `esp32:`, `wifi:`, `api:`, `ota:`, `logger:`
-- Hardware sections: `psram`, `i2c`, `spi`, `time`
-- Physical components: `output`, `rtttl`, `sensor`, `binary_sensor`
+**What ESPHome provides** (auto-generated when you create a device):
+- `wifi:`, `api:`, `ota:`, `logger:`
 
 The workflow is safe and deterministic - same layout always produces the same YAML.
 
@@ -166,7 +178,9 @@ The workflow is safe and deterministic - same layout always produces the same YA
 ## Hardware Support
 
 **Currently Supported:**
-- Seeed Studio reTerminal E1001 (ESP32-S3, 800x480 e-paper)
+- Seeed Studio reTerminal E1001 (ESP32-S3, 800x480 e-paper, black/white)
+- Seeed Studio reTerminal E1002 (ESP32-S3, 800x480 e-paper, color)
+- TRMNL (ESP32-C3 e-paper device)
 
 **Hardware Features Exposed:**
 - 3 physical buttons (GPIO 3/4/5)

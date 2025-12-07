@@ -2,6 +2,21 @@
 
 
 
+## v0.6.3 - Entity Handling Improvements
+
+**Release Date:** December 7, 2025
+
+### 🐛 Bug Fixes
+
+#### Sensor Text Widget
+- **Graceful Empty Entity Handling**: Fixed compilation error when user creates a sensor_text widget without selecting an entity. Now displays "--" placeholder instead of generating invalid `id().state` code
+- **Auto Sensor Import**: Sensor text and progress bar widgets using Home Assistant entities (`sensor.*`, `text_sensor.*`) now automatically generate the required `platform: homeassistant` sensor imports in YAML
+
+#### Duplicate Sensor Prevention
+- **Shared Sensor Deduplication**: Fixed potential duplicate sensor definitions when the same entity is used across multiple widget types (e.g., using the same sensor in both a graph and sensor_text widget). All numeric sensors now share a single tracking set to prevent duplicates
+
+---
+
 ## v0.6.2 - Rendering Fixes
 
 **Release Date:** December 6, 2025

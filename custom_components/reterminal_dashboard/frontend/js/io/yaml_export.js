@@ -1234,13 +1234,14 @@ function generateSnippetLocally() {
     }
 
     // Add graph widget sensors (bridge HA entity to local ESPHome sensor)
+    // Use a shared Set to track all added sensor.* entities across widget types
+    const addedNumericSensors = new Set();
     if (graphWidgets.length > 0) {
         widgetSensorLines.push("  # Graph Widget Sensors (from Home Assistant)");
-        const addedGraphSensors = new Set(); // Avoid duplicates if same entity used in multiple graphs
         for (const w of graphWidgets) {
             const entityId = (w.entity_id || "").trim();
-            if (!entityId || addedGraphSensors.has(entityId)) continue;
-            addedGraphSensors.add(entityId);
+            if (!entityId || addedNumericSensors.has(entityId)) continue;
+            addedNumericSensors.add(entityId);
 
             // Convert HA entity_id to safe ESPHome local sensor ID
             const localSensorId = entityId.replace(/^sensor\./, "").replace(/\./g, "_").replace(/-/g, "_");
@@ -1250,6 +1251,44 @@ function generateSnippetLocally() {
             widgetSensorLines.push(`    entity_id: ${entityId}`);
             widgetSensorLines.push(`    internal: true`);
         }
+    }
+
+    // Collect sensor_text and progress_bar widgets that use HA sensor entities
+    const sensorTextWidgets = [];
+    for (const page of pagesLocal) {
+        if (!page || !Array.isArray(page.widgets)) continue;
+        for (const w of page.widgets) {
+            const t = (w.type || "").toLowerCase();
+            if (t === "sensor_text" || t === "progress_bar") {
+                sensorTextWidgets.push(w);
+            }
+        }
+    }
+
+    // Add sensor_text/progress_bar widget sensors (bridge HA entity to local ESPHome sensor)
+    // Only for sensor.* entities (weather.* and text_sensor.* are handled in text_sensor section)
+    // Uses shared addedNumericSensors Set to avoid duplicates with graph widgets
+    let sensorTextSensorCount = 0;
+    for (const w of sensorTextWidgets) {
+        const entityId = (w.entity_id || "").trim();
+        const p = w.props || {};
+        // Skip if no entity, already added (by graph or other sensor_text), local sensor, or not a sensor.* entity
+        if (!entityId || addedNumericSensors.has(entityId) || p.is_local_sensor) continue;
+        if (!entityId.startsWith("sensor.")) continue; // weather.* and text_sensor.* handled elsewhere
+        
+        addedNumericSensors.add(entityId);
+
+        // Convert HA entity_id to safe ESPHome local sensor ID
+        const localSensorId = entityId.replace(/^sensor\./, "").replace(/\./g, "_").replace(/-/g, "_");
+
+        if (sensorTextSensorCount === 0) {
+            widgetSensorLines.push("  # Sensor Text Widget Sensors (from Home Assistant)");
+        }
+        sensorTextSensorCount++;
+        widgetSensorLines.push(`  - platform: homeassistant`);
+        widgetSensorLines.push(`    id: ${localSensorId}`);
+        widgetSensorLines.push(`    entity_id: ${entityId}`);
+        widgetSensorLines.push(`    internal: true`);
     }
 
     // Add weather forecast numeric sensors to unified sensor block
@@ -1295,19 +1334,26 @@ function generateSnippetLocally() {
 
     // Collect weather entities used by sensor_text and weather_icon widgets
     const weatherEntitiesUsed = new Set();
+    // Collect text_sensor entities used by sensor_text widgets
+    const textSensorEntitiesUsed = new Set();
     for (const page of pagesLocal) {
         if (!page || !Array.isArray(page.widgets)) continue;
         for (const w of page.widgets) {
             const t = (w.type || "").toLowerCase();
             const entityId = (w.entity_id || "").trim();
+            const p = w.props || {};
+            if (p.is_local_sensor) continue; // Skip local sensors
             if ((t === "sensor_text" || t === "weather_icon") && entityId.startsWith("weather.")) {
                 weatherEntitiesUsed.add(entityId);
+            }
+            if (t === "sensor_text" && entityId.startsWith("text_sensor.")) {
+                textSensorEntitiesUsed.add(entityId);
             }
         }
     }
 
     // Check if we need text_sensor block
-    const needsTextSensors = quoteRssWidgets.length > 0 || weatherForecastWidgets.length > 0 || weatherEntitiesUsed.size > 0;
+    const needsTextSensors = quoteRssWidgets.length > 0 || weatherForecastWidgets.length > 0 || weatherEntitiesUsed.size > 0 || textSensorEntitiesUsed.size > 0;
 
     if (needsTextSensors) {
         lines.push("text_sensor:");
@@ -1343,6 +1389,19 @@ function generateSnippetLocally() {
             lines.push("  # Weather Entity Sensors");
             for (const entityId of weatherEntitiesUsed) {
                 const safeId = entityId.replace(/\./g, "_").replace(/-/g, "_");
+                lines.push(`  - platform: homeassistant`);
+                lines.push(`    id: ${safeId}`);
+                lines.push(`    entity_id: ${entityId}`);
+                lines.push(`    internal: true`);
+            }
+            lines.push("");
+        }
+
+        // Add text_sensor entity sensors (for sensor_text widgets using text_sensor.* entities)
+        if (textSensorEntitiesUsed.size > 0) {
+            lines.push("  # Text Sensor Entity Sensors (from Home Assistant)");
+            for (const entityId of textSensorEntitiesUsed) {
+                const safeId = entityId.replace(/^text_sensor\./, "").replace(/\./g, "_").replace(/-/g, "_");
                 lines.push(`  - platform: homeassistant`);
                 lines.push(`    id: ${safeId}`);
                 lines.push(`    entity_id: ${entityId}`);
@@ -1568,44 +1627,60 @@ function generateSnippetLocally() {
                         usedFontIds.add(labelFontId);
                         usedFontIds.add(valueFontId);
 
-                        // Determine if this is a text-based entity (weather, text_sensor) or numeric sensor
-                        const isTextEntity = entityId.startsWith("weather.") || entityId.startsWith("text_sensor.") || p.is_text_sensor;
-                        const safeEntityId = entityId.replace(/^sensor\./, "").replace(/\./g, "_").replace(/-/g, "_");
-
-                        // Build format specifier and value expression based on entity type
-                        let fmtSpec, valueExpr;
-                        if (isTextEntity) {
-                            // Text-based entity: use %s and .state.c_str()
-                            fmtSpec = "%s";
-                            valueExpr = `id(${safeEntityId}).state.c_str()`;
-                        } else {
-                            // Numeric sensor: use precision-based float format
-                            fmtSpec = `%.${precision >= 0 ? precision : 1}f%s`;
-                            valueExpr = `id(${safeEntityId}).state, "${unit}"`;
-                        }
-
-                        // Generate output based on value format
-                        if (label && valueFormat === "label_value") {
-                            lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${labelFontId}), ${color}, TextAlign::${textAlign}, "${label}");`);
-                            if (isTextEntity) {
-                                lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                        // Handle missing entity_id gracefully - show placeholder text instead of invalid id() call
+                        if (!entityId) {
+                            // No entity configured - show label with placeholder value
+                            if (label && (valueFormat === "label_value" || valueFormat === "label_newline_value")) {
+                                lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${labelFontId}), ${color}, TextAlign::${textAlign}, "${label}");`);
+                                if (valueFormat === "label_newline_value") {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + 4 + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "--");`);
+                                } else {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "--");`);
+                                }
                             } else {
-                                lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "--");`);
                             }
-                        } else if (valueFormat === "label_newline_value") {
-                            // Label on one line, value on next
-                            lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${labelFontId}), ${color}, TextAlign::${textAlign}, "${label}");`);
-                            if (isTextEntity) {
-                                lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + 4 + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
-                            } else {
-                                lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + 4 + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
-                            }
+                            lines.push(`        // WARNING: No entity_id configured for this sensor_text widget`);
                         } else {
-                            // Just value (value_only or fallback)
+                            // Determine if this is a text-based entity (weather, text_sensor) or numeric sensor
+                            const isTextEntity = entityId.startsWith("weather.") || entityId.startsWith("text_sensor.") || p.is_text_sensor;
+                            const safeEntityId = entityId.replace(/^sensor\./, "").replace(/\./g, "_").replace(/-/g, "_");
+
+                            // Build format specifier and value expression based on entity type
+                            let fmtSpec, valueExpr;
                             if (isTextEntity) {
-                                lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                // Text-based entity: use %s and .state.c_str()
+                                fmtSpec = "%s";
+                                valueExpr = `id(${safeEntityId}).state.c_str()`;
                             } else {
-                                lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                // Numeric sensor: use precision-based float format
+                                fmtSpec = `%.${precision >= 0 ? precision : 1}f%s`;
+                                valueExpr = `id(${safeEntityId}).state, "${unit}"`;
+                            }
+
+                            // Generate output based on value format
+                            if (label && valueFormat === "label_value") {
+                                lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${labelFontId}), ${color}, TextAlign::${textAlign}, "${label}");`);
+                                if (isTextEntity) {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                } else {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                }
+                            } else if (valueFormat === "label_newline_value") {
+                                // Label on one line, value on next
+                                lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${labelFontId}), ${color}, TextAlign::${textAlign}, "${label}");`);
+                                if (isTextEntity) {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + 4 + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                } else {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${labelFontSize} + 4 + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                }
+                            } else {
+                                // Just value (value_only or fallback)
+                                if (isTextEntity) {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                } else {
+                                    lines.push(`        it.printf(${alignX}, ${w.y} + ${TEXT_Y_OFFSET}, id(${valueFontId}), ${color}, TextAlign::${textAlign}, "${fmtSpec}", ${valueExpr});`);
+                                }
                             }
                         }
 

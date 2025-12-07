@@ -894,8 +894,8 @@ function generateSnippetLocally() {
             } else if (renderMode === "Color (RGB565)") {
                 imgType = "RGB565";
             } else if (renderMode === "Auto") {
-                // Auto: E1002→RGB565, E1001→GRAYSCALE
-                imgType = (getDeviceModel() === "reterminal_e1002") ? "RGB565" : "GRAYSCALE";
+                // Auto: E1002→RGB565, E1001/TRMNL→BINARY (matches online_image behavior)
+                imgType = (getDeviceModel() === "reterminal_e1002") ? "RGB565" : "BINARY";
             }
 
             lines.push(`  - file: "${path}"`);
@@ -978,8 +978,9 @@ function generateSnippetLocally() {
 
             lines.push(`    update_interval: ${updateInterval}`);
 
-            // Add dithering ONLY for Grayscale (Binary usually assumes pre-dithered or threshold)
-            if (imgType === "GRAYSCALE") {
+            // Add dithering for monochrome displays (BINARY and GRAYSCALE)
+            // FLOYDSTEINBERG provides best quality for e-paper displays
+            if (imgType === "BINARY" || imgType === "GRAYSCALE") {
                 lines.push(`    dither: FLOYDSTEINBERG`);
             }
 

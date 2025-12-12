@@ -502,7 +502,87 @@ function parseSnippetYamlOffline(yamlText) {
                         color: p.color || "blue",
                         bg_color: p.bg_color || "gray"
                     };
-
+                } else if (widgetType === "lvgl_tabview") {
+                    widget.props = {
+                        bg_color: p.bg_color || "white",
+                        tabs: (p.tabs || "").split(",").map(t => t.trim()).filter(t => t)
+                    };
+                } else if (widgetType === "lvgl_tileview") {
+                    widget.props = {
+                        bg_color: p.bg_color || "white",
+                        tiles: [] // tile structure not easily parseable from flat props yet, defaulting empty
+                    };
+                } else if (widgetType === "lvgl_led") {
+                    widget.props = {
+                        color: p.color || "red",
+                        brightness: parseInt(p.brightness || 255, 10)
+                    };
+                } else if (widgetType === "lvgl_spinner") {
+                    widget.props = {
+                        spin_time: parseInt(p.spin_time || 1000, 10),
+                        arc_length: parseInt(p.arc_length || 60, 10),
+                        arc_color: p.arc_color || "blue",
+                        track_color: p.track_color || "white"
+                    };
+                } else if (widgetType === "lvgl_buttonmatrix") {
+                    widget.props = {
+                        rows: [] // Complex structure, placeholder for now
+                    };
+                } else if (widgetType === "lvgl_checkbox") {
+                    widget.props = {
+                        text: (p.text || "Checkbox").replace(/^"|"$/g, ''),
+                        checked: (p.checked === "true" || p.checked === true),
+                        color: p.color || "blue"
+                    };
+                } else if (widgetType === "lvgl_dropdown") {
+                    widget.props = {
+                        options: (p.options || "").replace(/\\n/g, "\n"), // handle escaped newlines
+                        selected_index: parseInt(p.selected_index || 0, 10),
+                        color: p.color || "white"
+                    };
+                } else if (widgetType === "lvgl_keyboard") {
+                    widget.props = {
+                        mode: p.mode || "TEXT_UPPER",
+                        textarea_id: p.textarea || ""
+                    };
+                } else if (widgetType === "lvgl_roller") {
+                    widget.props = {
+                        options: (p.options || "").replace(/\\n/g, "\n"),
+                        visible_row_count: parseInt(p.visible_row_count || 3, 10),
+                        color: p.color || "white",
+                        bg_color: p.bg_color || "black",
+                        selected_bg_color: p.selected_bg_color || "blue",
+                        selected_text_color: p.selected_text_color || "white"
+                    };
+                } else if (widgetType === "lvgl_spinbox") {
+                    widget.props = {
+                        min: parseInt(p.range_from || p.min || 0, 10),
+                        max: parseInt(p.range_to || p.max || 100, 10),
+                        digit_count: parseInt(p.digits || p.digit_count || 4, 10),
+                        step: parseInt(p.step || 1, 10),
+                        value: parseInt(p.value || 0, 10)
+                    };
+                } else if (widgetType === "lvgl_switch") {
+                    widget.props = {
+                        checked: (p.state === "true" || p.state === true || p.checked === "true"),
+                        bg_color: p.bg_color || "gray",
+                        color: p.color || "blue", // indicator
+                        knob_color: p.knob_color || "white"
+                    };
+                } else if (widgetType === "lvgl_textarea") {
+                    widget.props = {
+                        placeholder: (p.placeholder_text || p.placeholder || "").replace(/^"|"$/g, ''),
+                        text: (p.text || "").replace(/^"|"$/g, ''),
+                        one_line: (p.one_line === "true" || p.one_line === true),
+                        max_length: parseInt(p.max_length || 0, 10)
+                    };
+                } else if (widgetType === "lvgl_obj") {
+                    widget.props = {
+                        color: p.color || "white",
+                        border_width: parseInt(p.border_width || 1, 10),
+                        border_color: p.border_color || "gray",
+                        radius: parseInt(p.radius || 0, 10)
+                    };
                 } else if (widgetType.startsWith("lvgl_")) {
                     // Generic fallback for other LVGL widgets
                     // Copy all props from p to widget.props, converting "true"/"false" strings

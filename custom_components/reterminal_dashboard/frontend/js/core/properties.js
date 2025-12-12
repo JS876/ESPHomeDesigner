@@ -126,6 +126,7 @@ output["closest_end_time"] = converted_data[1]
 class PropertiesPanel {
     constructor() {
         this.panel = document.getElementById("propertiesPanel");
+        this.lastRenderedWidgetId = null; // Track which widget was last rendered
         this.init();
     }
 
@@ -159,14 +160,24 @@ class PropertiesPanel {
     render() {
         if (!this.panel) return;
 
-        // Prevent re-rendering if user is typing in the panel
-        // This avoids losing focus/cursor position
-        if (this.panel.contains(document.activeElement)) {
+        // Get current selected widget ID
+        const currentWidgetId = AppState.selectedWidgetId;
+
+        // Check if the selected widget changed - if so, force re-render
+        const widgetChanged = this.lastRenderedWidgetId !== currentWidgetId;
+
+        // Prevent re-rendering if user is typing in the panel AND same widget
+        // This avoids losing focus/cursor position while editing the same widget
+        // But if the widget changed, we MUST re-render to show correct properties
+        if (!widgetChanged && this.panel.contains(document.activeElement)) {
             const tag = document.activeElement.tagName.toLowerCase();
             if (tag === "input" || tag === "textarea") {
                 return;
             }
         }
+
+        // Update tracking
+        this.lastRenderedWidgetId = currentWidgetId;
 
         this.panel.innerHTML = "";
         const widget = AppState.getSelectedWidget();
@@ -965,6 +976,90 @@ class PropertiesPanel {
             note.style.textAlign = "center";
             note.innerText = "Check widget instructions for HA setup.";
             container.appendChild(note);
+        }
+        else if (type === "lvgl_tabview") {
+            this.addLabeledInput("Tabs (comma separated)", "text", (props.tabs || []).join(", "), (v) => {
+                const tabs = v.split(",").map(t => t.trim()).filter(t => t);
+                updateProp("tabs", tabs);
+            });
+            this.addSelect("Background Color", props.bg_color || "white", colors, (v) => updateProp("bg_color", v));
+        }
+        else if (type === "lvgl_tileview") {
+            this.addHint("Tiles are currently configured via YAML or advanced properties.");
+            this.addSelect("Background Color", props.bg_color || "white", colors, (v) => updateProp("bg_color", v));
+        }
+        else if (type === "lvgl_led") {
+            this.addSelect("Color", props.color || "red", colors, (v) => updateProp("color", v));
+            this.addLabeledInput("Brightness (0-255)", "number", props.brightness || 255, (v) => updateProp("brightness", parseInt(v, 10)));
+        }
+        else if (type === "lvgl_spinner") {
+            this.addLabeledInput("Spin Time (ms)", "number", props.spin_time || 1000, (v) => updateProp("spin_time", parseInt(v, 10)));
+            this.addLabeledInput("Arc Length (deg)", "number", props.arc_length || 60, (v) => updateProp("arc_length", parseInt(v, 10)));
+            this.addSelect("Arc Color", props.arc_color || "blue", colors, (v) => updateProp("arc_color", v));
+            this.addSelect("Track Color", props.track_color || "white", colors, (v) => updateProp("track_color", v));
+        }
+        else if (type === "lvgl_buttonmatrix") {
+            this.addHint("Edit rows via YAML or simple comma-separated lists per row.");
+            // Simple editor: Row 1, Row 2...
+            const rows = props.rows || [];
+            // Just a placeholder for now
+        }
+        else if (type === "lvgl_checkbox") {
+            this.addLabeledInputWithPicker("Entity ID", "text", widget.entity_id || "", (v) => {
+                AppState.updateWidget(widget.id, { entity_id: v });
+            }, widget);
+            this.addHint("Toggle input_boolean when tapped");
+
+            this.addLabeledInput("Label", "text", props.text || "Checkbox", (v) => updateProp("text", v));
+            this.addCheckbox("Checked", props.checked || false, (v) => updateProp("checked", v));
+            this.addSelect("Color", props.color || "blue", colors, (v) => updateProp("color", v));
+        }
+        else if (type === "lvgl_dropdown") {
+            this.addLabeledInput("Options (one per line)", "textarea", props.options || "", (v) => updateProp("options", v));
+            this.addLabeledInput("Selected Index", "number", props.selected_index || 0, (v) => updateProp("selected_index", parseInt(v, 10)));
+            this.addSelect("Color", props.color || "white", colors, (v) => updateProp("color", v));
+        }
+        else if (type === "lvgl_keyboard") {
+            this.addSelect("Mode", props.mode || "TEXT_UPPER", ["TEXT_LOWER", "TEXT_UPPER", "SPECIAL", "NUMBER"], (v) => updateProp("mode", v));
+            this.addLabeledInput("Textarea ID Link", "text", props.textarea_id || "", (v) => updateProp("textarea_id", v));
+        }
+        else if (type === "lvgl_roller") {
+            this.addLabeledInput("Options (one per line)", "textarea", props.options || "", (v) => updateProp("options", v));
+            this.addLabeledInput("Visible Rows", "number", props.visible_row_count || 3, (v) => updateProp("visible_row_count", parseInt(v, 10)));
+            this.addSelect("Color", props.color || "white", colors, (v) => updateProp("color", v));
+            this.addSelect("Background Color", props.bg_color || "black", colors, (v) => updateProp("bg_color", v));
+            this.addSelect("Selected BG Color", props.selected_bg_color || "blue", colors, (v) => updateProp("selected_bg_color", v));
+            this.addSelect("Selected Text Color", props.selected_text_color || "white", colors, (v) => updateProp("selected_text_color", v));
+        }
+        else if (type === "lvgl_spinbox") {
+            this.addLabeledInput("Min", "number", props.min || 0, (v) => updateProp("min", parseInt(v, 10)));
+            this.addLabeledInput("Max", "number", props.max || 100, (v) => updateProp("max", parseInt(v, 10)));
+            this.addLabeledInput("Value", "number", props.value || 0, (v) => updateProp("value", parseInt(v, 10)));
+            this.addLabeledInput("Digits", "number", props.digit_count || 4, (v) => updateProp("digit_count", parseInt(v, 10)));
+            this.addLabeledInput("Step", "number", props.step || 1, (v) => updateProp("step", parseInt(v, 10)));
+        }
+        else if (type === "lvgl_switch") {
+            this.addLabeledInputWithPicker("Entity ID", "text", widget.entity_id || "", (v) => {
+                AppState.updateWidget(widget.id, { entity_id: v });
+            }, widget);
+            this.addHint("Toggle switch/light/input_boolean when tapped");
+
+            this.addCheckbox("Checked", props.checked || false, (v) => updateProp("checked", v));
+            this.addSelect("Indicator Color", props.color || "blue", colors, (v) => updateProp("color", v));
+            this.addSelect("Background Color", props.bg_color || "gray", colors, (v) => updateProp("bg_color", v));
+            this.addSelect("Knob Color", props.knob_color || "white", colors, (v) => updateProp("knob_color", v));
+        }
+        else if (type === "lvgl_textarea") {
+            this.addLabeledInput("Placeholder", "text", props.placeholder || "", (v) => updateProp("placeholder", v));
+            this.addLabeledInput("Text", "text", props.text || "", (v) => updateProp("text", v));
+            this.addCheckbox("One Line", props.one_line || false, (v) => updateProp("one_line", v));
+            this.addLabeledInput("Max Length", "number", props.max_length || 0, (v) => updateProp("max_length", parseInt(v, 10)));
+        }
+        else if (type === "lvgl_obj") {
+            this.addSelect("Color", props.color || "white", colors, (v) => updateProp("color", v));
+            this.addLabeledInput("Border Width", "number", props.border_width || 1, (v) => updateProp("border_width", parseInt(v, 10)));
+            this.addSelect("Border Color", props.border_color || "gray", colors, (v) => updateProp("border_color", v));
+            this.addLabeledInput("Radius", "number", props.radius || 0, (v) => updateProp("radius", parseInt(v, 10)));
         }
     }
 

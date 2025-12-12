@@ -153,32 +153,26 @@ We expose everything (buttons, sensors, battery) back to Home Assistant. Does a 
   - Shows upcoming weather conditions with icons
   - Integrates with Home Assistant weather entities
 
-## LVGL Support (Beta / Hybrid Mode)
+## LVGL Support (Experimental)
 
-**⚠️ Experimental Feature**
+**⚠️ Highly Experimental - Expect Bugs!**
 
-This tool includes experimental support for **LVGL (Light and Versatile Graphics Library)**, allowing for more advanced widgets (like Arcs, Charts, and interactive Buttons) on capable devices.
+This tool includes experimental support for **LVGL (Light and Versatile Graphics Library)** widgets on LCD+Touch devices. LVGL enables interactive widgets like buttons, switches, sliders, and checkboxes that can control Home Assistant entities directly from the touchscreen.
 
-### How it works (Hybrid Mode)
+### Important Notes
 
-The editor operates in two modes:
+- **LCD+Touch devices only** - LVGL is designed for real-time displays, not e-paper
+- **Entire page switches to LVGL mode** if you add any LVGL widget
+- **High memory usage** - Requires ESP32-S3 with PSRAM
+- **May be unstable** - This feature is under active development
 
-1.  **Native Mode (Default)**: If you only use standard widgets (Text, Icon, Graph, lines...), it generates standard ESPHome display lambdas. This is the most stable and memory-efficient mode.
+### Available LVGL Widgets
 
-2.  **LVGL Hybrid Mode**: If you add **ANY** LVGL-specific widget to your page (e.g., `LVGL Button`, `LVGL Arc`, `LVGL Slider`), the **entire page** switches to LVGL mode.
+- Buttons, Switches, Checkboxes, Sliders (interactive, can trigger HA actions)
+- Arcs, Bars, Charts (display sensor values)
+- Labels, Images, QR Codes, and more
 
-### Important Behavior in LVGL Mode
-
-When a page switches to LVGL mode:
-*   **Auto-Translation**: The editor will automatically attempt to convert your existing "Native" widgets into their LVGL equivalents.
-    *   `Graph` -> `lvgl_chart`
-    *   `Image` / `Online Image` -> `lvgl_img`
-    *   `Progress Bar` -> `lvgl_bar`
-    *   `QR Code` -> `lvgl_qrcode`
-    *   `Text` / `Label` -> `lvgl_label`
-    *   `Rectangles` / `Lines` -> `lvgl_obj` / `lvgl_line`
-*   **Visibility Warning**: Any widget type that **does not** have an LVGL translation implemented yet will become **invisible** on the device, even if it shows up in the editor.
-*   **Memory Usage**: LVGL requires significantly more RAM than native mode. Ensure your device (like ESP32-S3) has PSRAM enabled.
+For stable results, stick to **Native Mode** (standard widgets without LVGL prefix).
 
 ## Features
 
@@ -281,14 +275,6 @@ Add `compile_process_limit: 1` to your `esphome:` section in the YAML. This redu
    python -m esphome compile C:\esphome_build\reterminal.yaml
    ```
 5. **Upload**: Take the generated `.bin` file and upload it via the Home Assistant ESPHome dashboard (Install → Manual Download).
-
-## Contributing
-
-This is a passion project built to solve a real problem. Found a bug? Have an idea? Open an issue or PR!
-
-**Planned features:**
-- Color e-ink support
-- More device types (other ESP32-based e-paper displays)
 
 ## License
 

@@ -374,6 +374,147 @@ class WidgetFactory {
                     font_size_event: 18
                 };
                 break;
+
+            case "lvgl_tabview":
+                widget.width = 300;
+                widget.height = 200;
+                widget.props = {
+                    bg_color: defaultBgColor,
+                    tabs: ["Tab 1", "Tab 2", "Tab 3"]
+                };
+                break;
+
+            case "lvgl_tileview":
+                widget.width = 300;
+                widget.height = 250;
+                widget.props = {
+                    bg_color: defaultBgColor,
+                    tiles: [
+                        { id: "tile_0_0", row: 0, col: 0, label: "Tile 0,0" },
+                        { id: "tile_0_1", row: 0, col: 1, label: "Tile 0,1" }
+                    ]
+                };
+                break;
+
+            case "lvgl_led":
+                widget.width = 40;
+                widget.height = 40;
+                widget.props = {
+                    color: "red",
+                    brightness: 255
+                };
+                break;
+
+            case "lvgl_spinner":
+                widget.width = 60;
+                widget.height = 60;
+                widget.props = {
+                    spin_time: 1000,
+                    arc_length: 60,
+                    arc_color: "blue",
+                    track_color: defaultBgColor
+                };
+                break;
+
+            case "lvgl_buttonmatrix":
+                widget.width = 220;
+                widget.height = 120;
+                widget.props = {
+                    rows: [
+                        { buttons: ["Btn 1", "Btn 2", "Btn 3"] },
+                        { buttons: ["Btn 4", "Btn 5", "Btn 6"] }
+                    ],
+                    ctrl_map: [] // Future advanced control
+                };
+                break;
+
+            case "lvgl_checkbox":
+                widget.width = 150;
+                widget.height = 30;
+                widget.props = {
+                    text: "Checkbox",
+                    checked: false,
+                    color: defaultColor
+                };
+                break;
+
+            case "lvgl_dropdown":
+                widget.width = 150;
+                widget.height = 40;
+                widget.props = {
+                    options: "Option 1\nOption 2\nOption 3",
+                    selected_index: 0,
+                    color: defaultColor
+                };
+                break;
+
+            case "lvgl_keyboard":
+                widget.width = 300;
+                widget.height = 120;
+                widget.props = {
+                    mode: "TEXT_UPPER", // TEXT_LOWER, TEXT_UPPER, SPECIAL, NUMBER
+                    textarea_id: "" // Link to a textarea
+                };
+                break;
+
+            case "lvgl_roller":
+                widget.width = 120;
+                widget.height = 150;
+                widget.props = {
+                    options: "Option 1\nOption 2\nOption 3\nOption 4\nOption 5",
+                    visible_row_count: 3,
+                    color: defaultColor,
+                    bg_color: defaultBgColor,
+                    selected_bg_color: "blue",
+                    selected_text_color: "white"
+                };
+                break;
+
+            case "lvgl_spinbox":
+                widget.width = 120;
+                widget.height = 40;
+                widget.props = {
+                    min: 0,
+                    max: 100,
+                    value: 0,
+                    digit_count: 4,
+                    separator_position: 0, // 0 = no separator
+                    step: 1
+                };
+                break;
+
+            case "lvgl_switch":
+                widget.width = 60;
+                widget.height = 30;
+                widget.props = {
+                    checked: false,
+                    color: "blue", // Indicator color when on
+                    bg_color: "gray",
+                    knob_color: "white"
+                };
+                break;
+
+            case "lvgl_textarea":
+                widget.width = 200;
+                widget.height = 100;
+                widget.props = {
+                    text: "",
+                    placeholder: "Enter text here...",
+                    one_line: false,
+                    max_length: 0
+                };
+                break;
+
+            case "lvgl_obj":
+                widget.width = 100;
+                widget.height = 100;
+                widget.props = {
+                    color: defaultBgColor,
+                    border_width: 1,
+                    border_color: "gray",
+                    radius: 0
+                };
+                break;
         }
 
         return widget;

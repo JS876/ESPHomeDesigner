@@ -53,6 +53,20 @@ class Canvas {
         this.canvas.style.width = `${dims.width}px`;
         this.canvas.style.height = `${dims.height}px`;
 
+        // Apply device shape (e.g. round)
+        const currentModel = (typeof getDeviceModel === 'function') ? getDeviceModel() : "reterminal_e1001";
+        const profile = (window.DEVICE_PROFILES && window.DEVICE_PROFILES[currentModel]) ? window.DEVICE_PROFILES[currentModel] : null;
+
+        if (profile && profile.shape === "round") {
+            this.canvas.style.borderRadius = "50%";
+            this.canvas.style.overflow = "hidden";
+            this.canvas.style.boxShadow = "0 0 0 10px rgba(0,0,0,0.1)"; // Optional: hint at the bezel
+        } else {
+            this.canvas.style.borderRadius = "0";
+            this.canvas.style.overflow = "visible";
+            this.canvas.style.boxShadow = "none";
+        }
+
         // Apply dark mode/theme
         if (AppState.settings.editor_light_mode) {
             this.canvas.classList.add("light-mode");

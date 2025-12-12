@@ -203,10 +203,21 @@ function generateDisplaySection(profile) {
         lines.push("    id: epaper_display");
 
         const p = profile.pins.display;
-        if (p.cs) lines.push(`    cs_pin: ${p.cs}`);
-        if (p.dc) lines.push(`    dc_pin: ${p.dc}`);
-        if (p.reset) lines.push(`    reset_pin: ${p.reset}`);
-        if (p.busy) lines.push(`    busy_pin: ${p.busy}`);
+        const addPin = (key, val) => {
+            if (!val) return;
+            if (typeof val === 'object') {
+                lines.push(`    ${key}:`);
+                lines.push(`      number: ${val.number}`);
+                if (val.inverted !== undefined) lines.push(`      inverted: ${val.inverted}`);
+            } else {
+                lines.push(`    ${key}: ${val}`);
+            }
+        };
+
+        addPin("cs_pin", p.cs);
+        addPin("dc_pin", p.dc);
+        addPin("reset_pin", p.reset);
+        addPin("busy_pin", p.busy);
 
         if (profile.displayModel) lines.push(`    model: "${profile.displayModel}"`);
 
@@ -218,13 +229,12 @@ function generateDisplaySection(profile) {
     // Add Touchscreen if present
     lines.push(...generateTouchscreenSection(profile));
 
-    // Add Backlight if present
-    lines.push(...generateBacklightSection(profile));
+    // Note: Backlight section is generated in yaml_export.js, not here (to avoid duplicates)
 
     return lines;
 }
 
-function generateSensorSection(profile, widgetSensorLines = []) {
+function generateSensorSection(profile, widgetSensorLines = [], displayId = "my_display") {
     const lines = [];
 
     // Check if we need a sensor: block
@@ -300,7 +310,7 @@ function generateSensorSection(profile, widgetSensorLines = []) {
     return lines;
 }
 
-function generateBinarySensorSection(profile, numPages) {
+function generateBinarySensorSection(profile, numPages, displayId = "my_display") {
     const lines = [];
     if (!profile.features.buttons) return lines;
 
@@ -322,10 +332,10 @@ function generateBinarySensorSection(profile, numPages) {
         lines.push("              lambda: 'return id(display_page) > 0;'");
         lines.push("            then:");
         lines.push("              - lambda: 'id(display_page) -= 1;'");
-        lines.push("              - component.update: my_display");
+        lines.push(`              - component.update: ${displayId}`);
         lines.push("            else:");
         lines.push(`              - lambda: 'id(display_page) = ${numPages - 1};'`);
-        lines.push("              - component.update: my_display");
+        lines.push(`              - component.update: ${displayId}`);
     }
 
     if (b.right) {
@@ -343,10 +353,10 @@ function generateBinarySensorSection(profile, numPages) {
         lines.push(`              lambda: 'return id(display_page) < ${numPages - 1};'`);
         lines.push("            then:");
         lines.push("              - lambda: 'id(display_page) += 1;'");
-        lines.push("              - component.update: my_display");
+        lines.push(`              - component.update: ${displayId}`);
         lines.push("            else:");
         lines.push("              - lambda: 'id(display_page) = 0;'");
-        lines.push("              - component.update: my_display");
+        lines.push(`              - component.update: ${displayId}`);
     }
 
     if (b.refresh) {
@@ -359,14 +369,14 @@ function generateBinarySensorSection(profile, numPages) {
         lines.push("    id: button_refresh");
         lines.push("    on_press:");
         lines.push("      then:");
-        lines.push("        - component.update: my_display");
+        lines.push(`        - component.update: ${displayId}`);
     }
 
     lines.push("");
     return lines;
 }
 
-function generateButtonSection(profile, numPages) {
+function generateButtonSection(profile, numPages, displayId = "my_display") {
     const lines = [];
     // Page cycling buttons (template buttons for HA)
     lines.push("button:");
@@ -380,7 +390,7 @@ function generateButtonSection(profile, numPages) {
     lines.push("            } else {");
     lines.push("              id(display_page) = 0;");
     lines.push("            }");
-    lines.push("        - component.update: my_display");
+    lines.push(`        - component.update: ${displayId}`);
 
     lines.push("  - platform: template");
     lines.push("    name: \"Previous Page\"");
@@ -392,7 +402,7 @@ function generateButtonSection(profile, numPages) {
     lines.push("            } else {");
     lines.push(`              id(display_page) = ${numPages - 1};`);
     lines.push("            }");
-    lines.push("        - component.update: my_display");
+    lines.push(`        - component.update: ${displayId}`);
 
     if (profile.features.buzzer) {
         lines.push("  - platform: template");

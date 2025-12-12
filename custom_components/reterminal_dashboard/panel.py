@@ -40,6 +40,10 @@ class ReTerminalDashboardPanelView(HomeAssistantView):
     url = PANEL_URL_PATH
     name = "reterminal_dashboard:panel"
     requires_auth = False  # Temporarily disable for testing
+    # WARNING: Do NOT add custom `options()` handlers to this view!
+    # Home Assistant's CORS middleware handles OPTIONS preflight automatically when cors_allowed is set.
+    # Adding custom OPTIONS handlers causes: ValueError: already has OPTIONS handler
+    # This breaks component setup and causes 404 errors for all static assets.
     cors_allowed = False
 
     def __init__(self, hass: HomeAssistant) -> None:
@@ -146,6 +150,9 @@ class ReTerminalDashboardStaticView(HomeAssistantView):
     url = "/reterminal-dashboard/static/{path:.*}"
     name = "reterminal_dashboard:static"
     requires_auth = False
+    # WARNING: Do NOT add custom `options()` handlers to this view!
+    # Home Assistant's CORS middleware handles OPTIONS preflight automatically.
+    # Adding custom OPTIONS handlers causes: ValueError: already has OPTIONS handler
     cors_allowed = True
 
     def __init__(self, hass: HomeAssistant) -> None:

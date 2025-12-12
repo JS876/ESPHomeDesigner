@@ -18,6 +18,8 @@ function generateSnippetLocally() {
 
     const model = getDeviceModel();
     const profile = DEVICE_PROFILES[model] || DEVICE_PROFILES["reterminal_e1001"];
+    // Determine display ID based on device type (LCD vs e-paper)
+    const displayId = profile.features?.lcd ? "my_display" : "epaper_display";
 
     // Collect quote/rss widgets early for globals and interval generation
     const quoteRssWidgetsEarly = [];
@@ -42,7 +44,7 @@ function generateSnippetLocally() {
         if (p.widgets) {
             p.widgets.forEach(w => {
                 const t = (w.type || "").toLowerCase();
-                if (w.type === "lvgl_arc" || w.type === "lvgl_button") {
+                if (w.type && w.type.startsWith("lvgl_")) {
                     useLVGL = true;
                 }
                 if (t === "graph") {
@@ -134,12 +136,7 @@ function generateSnippetLocally() {
     }
 
     // Add AXP2101 for PhotoPainter if needed
-    if (model === "esp32_s3_photopainter") {
-        const axpSource = "  - source: github://lewisxhe/esphome-axp2101";
-        if (!externalComponents.some(c => c.includes("esphome-axp2101"))) {
-            externalComponents.unshift(axpSource);
-        }
-    }
+    // (Removed: Working YAML shows manual I2C writes are used instead of component)
 
     if (externalComponents.length > 0) {
         lines.push("external_components:");
@@ -229,26 +226,94 @@ function generateSnippetLocally() {
     // 6. Sensors (Battery, SHT4x, etc + Widget Sensors)
     const widgetSensorLines = [];
     const processedSensorIds = new Set(); // Prevent duplicates
+    const haTextSensorLines = []; // For text_sensor HA imports
 
     pagesLocal.forEach(p => {
         if (!p.widgets) return;
         p.widgets.forEach(w => {
             const t = (w.type || "").toLowerCase();
-            // Logic to generate specific sensors for widgets could go here
+            const props = w.props || {};
+
+            // Collect Home Assistant sensor entities from sensor_text widgets
+            if (t === "sensor_text") {
+                const entity = w.entity_id || props.entity_id || "";
+                const entity2 = w.entity_id_2 || props.entity_id_2 || "";
+                const isTextSensor = !!props.is_text_sensor;
+                const isLocal = !!props.is_local_sensor;
+
+                // Only import HA entities, not local ones
+                if (entity && !isLocal && !processedSensorIds.has(entity)) {
+                    processedSensorIds.add(entity);
+                    const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_");
+
+                    if (isTextSensor || entity.startsWith("text_sensor.")) {
+                        haTextSensorLines.push(`  - platform: homeassistant`);
+                        haTextSensorLines.push(`    id: ${entityId}`);
+                        haTextSensorLines.push(`    entity_id: ${entity}`);
+                        haTextSensorLines.push(`    internal: true`);
+                    } else {
+                        widgetSensorLines.push(`  - platform: homeassistant`);
+                        widgetSensorLines.push(`    id: ${entityId}`);
+                        widgetSensorLines.push(`    entity_id: ${entity}`);
+                        widgetSensorLines.push(`    internal: true`);
+                    }
+                }
+
+                // Handle secondary entity
+                if (entity2 && !isLocal && !processedSensorIds.has(entity2)) {
+                    processedSensorIds.add(entity2);
+                    const entityId2 = entity2.replace(/[^a-zA-Z0-9_]/g, "_");
+
+                    if (isTextSensor || entity2.startsWith("text_sensor.")) {
+                        haTextSensorLines.push(`  - platform: homeassistant`);
+                        haTextSensorLines.push(`    id: ${entityId2}`);
+                        haTextSensorLines.push(`    entity_id: ${entity2}`);
+                        haTextSensorLines.push(`    internal: true`);
+                    } else {
+                        widgetSensorLines.push(`  - platform: homeassistant`);
+                        widgetSensorLines.push(`    id: ${entityId2}`);
+                        widgetSensorLines.push(`    entity_id: ${entity2}`);
+                        widgetSensorLines.push(`    internal: true`);
+                    }
+                }
+            }
+
+            // Also collect graph widget entities
+            if (t === "graph") {
+                const entity = w.entity_id || "";
+                const isLocal = !!props.is_local_sensor;
+
+                if (entity && !isLocal && !processedSensorIds.has(entity)) {
+                    processedSensorIds.add(entity);
+                    const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_");
+                    widgetSensorLines.push(`  - platform: homeassistant`);
+                    widgetSensorLines.push(`    id: ${entityId}`);
+                    widgetSensorLines.push(`    entity_id: ${entity}`);
+                    widgetSensorLines.push(`    internal: true`);
+                }
+            }
         });
     });
 
 
 
     // Call generic sensor generator
-    lines.push(...generateSensorSection(profile, widgetSensorLines));
+    lines.push(...generateSensorSection(profile, widgetSensorLines, displayId));
+
+    // Add text_sensor section if we have HA text sensors
+    if (haTextSensorLines.length > 0) {
+        lines.push("");
+        lines.push("text_sensor:");
+        lines.push(...haTextSensorLines);
+        lines.push("");
+    }
 
 
     // 7. Binary Sensors (Buttons)
-    lines.push(...generateBinarySensorSection(profile, pagesLocal.length));
+    lines.push(...generateBinarySensorSection(profile, pagesLocal.length, displayId));
 
     // 8. Buttons (Page Navigation Templates)
-    lines.push(...generateButtonSection(profile, pagesLocal.length));
+    lines.push(...generateButtonSection(profile, pagesLocal.length, displayId));
 
     // Generate image: component declarations for static images (deduplicated)
     if (staticImageMap.size > 0) {
@@ -346,10 +411,10 @@ function generateSnippetLocally() {
 
             lines.push(`    on_download_finished:`);
             lines.push(`      then:`);
-            lines.push(`        - component.update: epaper_display`);
+            lines.push(`        - component.update: ${displayId}`);
             lines.push(`    on_error:`);
             lines.push(`      then:`);
-            lines.push(`        - component.update: epaper_display`);
+            lines.push(`        - component.update: ${displayId}`);
         });
         lines.push("");
     }
@@ -639,9 +704,13 @@ function generateSnippetLocally() {
 
     // 9. Fonts
     // We need to collect all used fonts and generate font config.
-    lines.push("font:");
+    // Important: Collect fonts in a separate array to inject BEFORE display
+    const fontLines = ["font:"];
     const definedFontIds = new Set();
     const usedFontIds = new Set();
+    // Mark where fonts should be inserted (before display)
+    const fontInsertMarker = "__FONT_INSERT_MARKER__";
+    lines.push(fontInsertMarker);
 
     const addFont = (family, weight, size, italic = false) => {
         const safeFamily = family.replace(/\s+/g, "_").toLowerCase();
@@ -650,16 +719,19 @@ function generateSnippetLocally() {
 
         if (!definedFontIds.has(id)) {
             definedFontIds.add(id);
-            lines.push(`  - file: "fonts/${family}${italic ? '-Italic' : ''}.ttf"`); // Assumes fonts folder structure
-            lines.push(`    id: ${id}`);
-            lines.push(`    size: ${size}`);
 
-            // Map weights to standard names
+            // Map weights to standard Google Fonts file names
+            // 100=Thin, 200=ExtraLight, 300=Light, 400=Regular, 500=Medium, 600=SemiBold, 700=Bold, 800=ExtraBold, 900=Black
             let type = "Regular";
-            if (weight >= 700) type = "Bold";
+            if (weight >= 900) type = "Black";
+            else if (weight >= 800) type = "ExtraBold";
+            else if (weight >= 700) type = "Bold";
+            else if (weight >= 600) type = "SemiBold";
             else if (weight >= 500) type = "Medium";
+            else if (weight >= 400) type = "Regular";
             else if (weight >= 300) type = "Light";
-            else if (weight <= 200) type = "Thin";
+            else if (weight >= 200) type = "ExtraLight";
+            else type = "Thin";
 
             // If italic, append Italic
             if (italic) {
@@ -667,13 +739,17 @@ function generateSnippetLocally() {
                 else type = type + "Italic";
             }
 
-            lines[lines.length - 3] = `  - file: "fonts/${family}-${type}.ttf"`;
-
             // Handle MDI Icons special case
             if (family === "Material Design Icons") {
-                lines[lines.length - 3] = `  - file: "fonts/materialdesignicons-webfont.ttf"`;
-                lines.push("    glyphs:");
-                lines.push("      - \"\\U000F0000\"-\"\\U000F1AF0\""); // Full MDI range
+                fontLines.push(`  - file: "fonts/materialdesignicons-webfont.ttf"`);
+                fontLines.push(`    id: ${id}`);
+                fontLines.push(`    size: ${size}`);
+                fontLines.push("    glyphs:");
+                fontLines.push("      - \"\\U000F0000\"-\"\\U000F1AF0\""); // Full MDI range
+            } else {
+                fontLines.push(`  - file: "fonts/${family}-${type}.ttf"`);
+                fontLines.push(`    id: ${id}`);
+                fontLines.push(`    size: ${size}`);
             }
         }
         return id;
@@ -685,13 +761,13 @@ function generateSnippetLocally() {
     // Globals moved to top.
 
     if (useLVGL && window.generateLVGLSnippet) {
-        lines.push(...window.generateLVGLSnippet(pagesLocal, payload));
+        lines.push(...window.generateLVGLSnippet(pagesLocal, model));
     }
 
     // 5. Display & Touch & Backlight (Moved to end)
 
     // Inject Script Logic BEFORE display to match legacy ORDER
-    lines.push(generateScriptSection(payload, pagesLocal));
+    lines.push(generateScriptSection(payload, pagesLocal, profile));
     lines.push("");
 
     if (useLVGL) {
@@ -793,6 +869,11 @@ function generateSnippetLocally() {
 
             lines.push("      const auto COLOR_WHITE = Color(255, 255, 255, 0);"); // Transparent white? Or standard. E-paper logic.
             lines.push("      const auto COLOR_BLACK = Color(0, 0, 0, 255);");
+            lines.push("      const auto COLOR_RED = Color(255, 0, 0, 0);"); // Added Red
+            lines.push("      const auto COLOR_GREEN = Color(0, 255, 0, 0);"); // Added Green
+            lines.push("      const auto COLOR_BLUE = Color(0, 0, 255, 0);"); // Added Blue
+            lines.push("      const auto COLOR_YELLOW = Color(255, 255, 0, 0);"); // Added Yellow
+            lines.push("      const auto COLOR_ORANGE = Color(255, 165, 0, 0);"); // Added Orange
             lines.push("      const auto COLOR_OFF = COLOR_WHITE;");
             lines.push("      const auto COLOR_ON = COLOR_BLACK;");
             lines.push("");
@@ -886,70 +967,140 @@ function generateSnippetLocally() {
                             const family = p.font_family || "Roboto";
                             const size = parseInt(p.font_size || 20);
                             const weight = parseInt(p.font_weight || 400);
-                            const fontId = addFont(family, weight, size);
+                            const italic = !!p.italic;
+                            const fontId = addFont(family, weight, size, italic);
                             const align = p.text_align || "TOP_LEFT";
 
-                            lines.push(`        // widget:text id:${w.id} type:text x:${w.x} y:${w.y} w:${w.width} h:${w.height} text:"${text}" font_family:"${family}" font_size:${size} font_weight:${weight} color:${colorProp} text_align:${align} ${getCondProps(w)}`);
+                            lines.push(`        // widget:text id:${w.id} type:text x:${w.x} y:${w.y} w:${w.width} h:${w.height} text:"${text}" font_family:"${family}" font_size:${size} font_weight:${weight} italic:${italic} color:${colorProp} text_align:${align} ${getCondProps(w)}`);
                             lines.push(`        it.printf(${alignX}, ${alignY}, id(${fontId}), ${color}, ${espAlign}, "${text}");`);
 
                         } else if (t === "sensor_text") {
-                            const entity = p.entity_id;
+                            // Read all properties correctly
+                            const entity = w.entity_id || p.entity_id || "";
+                            const entity2 = w.entity_id_2 || p.entity_id_2 || "";
+                            const title = (w.title || "").replace(/"/g, '\\"');
                             const family = p.font_family || "Roboto";
-                            const size = parseInt(p.font_size || 20);
+                            const labelFontSize = parseInt(p.label_font_size || 14);
+                            const valueFontSize = parseInt(p.value_font_size || 20);
                             const weight = parseInt(p.font_weight || 400);
-                            const fontId = addFont(family, weight, size);
-                            const format = (p.format || "%.1f").replace(/"/g, '\\"');
+                            const italic = !!p.italic;
+                            const valueFormat = p.value_format || "label_value";
+                            const precision = parseInt(p.precision, 10);
+                            const prefix = (p.prefix || "").replace(/"/g, '\\"');
+                            const postfix = (p.postfix || "").replace(/"/g, '\\"');
+                            const unit = (p.unit || "").replace(/"/g, '\\"');
+                            const separator = (p.separator || " ~ ").replace(/"/g, '\\"');
+                            const isTextSensor = !!p.is_text_sensor;
+                            const isLocalSensor = !!p.is_local_sensor;
+                            const align = p.text_align || p.label_align || "TOP_LEFT";
 
-                            // Multivalue logic
-                            const secondary = p.entity_id_2 || "";
-                            const separator = p.separator || " / ";
-                            const autoUnit = !!p.auto_unit;
-                            const align = p.text_align || "TOP_LEFT";
+                            // Create fonts for label and value (with italic support)
+                            const labelFontId = addFont(family, weight, labelFontSize, italic);
+                            const valueFontId = addFont(family, weight, valueFontSize, italic);
 
-                            lines.push(`        // widget:sensor_text id:${w.id} type:sensor_text x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity_id:${entity} font_family:"${family}" font_size:${size} font_weight:${weight} format:"${format}" color:${colorProp} text_align:${align} auto_unit:${autoUnit} entity_id_2:${secondary} separator:"${separator}" ${getCondProps(w)}`);
+                            // Widget metadata comment - include all properties for round-trip persistence
+                            lines.push(`        // widget:sensor_text id:${w.id} type:sensor_text x:${w.x} y:${w.y} w:${w.width} h:${w.height} ent:${entity} entity_2:${entity2} title:"${title}" format:${valueFormat} label_font:${labelFontSize} value_font:${valueFontSize} color:${colorProp} label_align:${align} value_align:${align} precision:${isNaN(precision) ? -1 : precision} unit:"${unit}" prefix:"${prefix}" postfix:"${postfix}" separator:"${separator}" local:${isLocalSensor} text_sensor:${isTextSensor} font_family:"${family}" font_weight:${weight} italic:${italic}`);
 
-                            let logic = "";
-                            if (entity) {
-                                // Determine sensor type (text_sensor vs sensor)
-                                // Heuristic: check if format contains %s
-                                const isString = format.includes("%s");
-                                const safeEntity = entity.replace(/\./g, "_").replace(/-/g, "_"); // Wait, IDs are usually sanitzed?
-                                // Wait, in ESPHome 'id(entity)' refs to the ID defined in config.
-                                // If we imported entities from HA, they have IDs same as entity_id usually (with substitutions).
-                                // Or we use `homeassistant` platform which gives id same as entity_id (with dots replaced by underscores usually).
-                                // We should assume the ID is consistent.
-                                const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_"); // standard replacement
+                            if (!entity) {
+                                lines.push(`        it.printf(${w.x}, ${w.y}, id(${valueFontId}), ${color}, TextAlign::TOP_LEFT, "No Entity");`);
+                            } else {
+                                // Handle entity ID for ESPHome - sanitize for use as C++ identifier
+                                const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_");
+                                const entityId2 = entity2 ? entity2.replace(/[^a-zA-Z0-9_]/g, "_") : "";
 
-                                // Auto-unit logic
-                                let suffix = "";
-                                if (p.auto_unit) {
-                                    // We can't do auto-unit easily in lambda unless we look up unit.
-                                    // id(entity).get_unit_of_measurement()
-                                    suffix = ` " " + id(${entityId}).get_unit_of_measurement()`;
-                                    // If unit is dynamic inside lambda, we append it.
-                                }
+                                // Build the value expression with optional precision, prefix, postfix, unit
+                                lines.push(`        {`);
 
-                                if (secondary) {
-                                    const secId = secondary.replace(/[^a-zA-Z0-9_]/g, "_");
-                                    // Assuming both are same type for simplicity or handled by format?
-                                    // If format is "%.1f", we can't apply to two.
-                                    // Used likely expects "custom" format or we construct string.
-                                    // Standard approach:
-                                    lines.push(`        it.printf(${alignX}, ${alignY}, id(${fontId}), ${color}, ${espAlign}, "%s", (id(${entityId}).state_as_string() + "${separator}" + id(${secId}).state_as_string()).c_str());`);
+                                // Get value as string - handle text sensors vs numeric sensors
+                                if (isTextSensor || entity.startsWith("text_sensor.")) {
+                                    lines.push(`          std::string val1 = id(${entityId}).state;`);
                                 } else {
-                                    if (p.auto_unit) {
-                                        lines.push(`        it.printf(${alignX}, ${alignY}, id(${fontId}), ${color}, ${espAlign}, "%s", (id(${entityId}).state_as_string() + id(${entityId}).get_unit_of_measurement()).c_str());`);
+                                    // Numeric sensor with optional precision
+                                    if (!isNaN(precision) && precision >= 0) {
+                                        lines.push(`          char buf1[32];`);
+                                        lines.push(`          snprintf(buf1, sizeof(buf1), "%.${precision}f", id(${entityId}).state);`);
+                                        lines.push(`          std::string val1 = buf1;`);
                                     } else {
-                                        if (isString) {
-                                            lines.push(`        it.printf(${alignX}, ${alignY}, id(${fontId}), ${color}, ${espAlign}, "${format}", id(${entityId}).state.c_str());`);
-                                        } else {
-                                            lines.push(`        it.printf(${alignX}, ${alignY}, id(${fontId}), ${color}, ${espAlign}, "${format}", id(${entityId}).state);`);
-                                        }
+                                        lines.push(`          std::string val1 = to_string(id(${entityId}).state);`);
                                     }
                                 }
-                            } else {
-                                lines.push(`        it.printf(${alignX}, ${alignY}, id(${fontId}), ${color}, ${espAlign}, "No Entity");`);
+
+                                // Handle secondary entity if present
+                                if (entityId2) {
+                                    if (isTextSensor) {
+                                        lines.push(`          std::string val2 = id(${entityId2}).state;`);
+                                    } else {
+                                        if (!isNaN(precision) && precision >= 0) {
+                                            lines.push(`          char buf2[32];`);
+                                            lines.push(`          snprintf(buf2, sizeof(buf2), "%.${precision}f", id(${entityId2}).state);`);
+                                            lines.push(`          std::string val2 = buf2;`);
+                                        } else {
+                                            lines.push(`          std::string val2 = to_string(id(${entityId2}).state);`);
+                                        }
+                                    }
+                                    lines.push(`          std::string sensorValue = val1 + "${separator}" + val2;`);
+                                } else {
+                                    lines.push(`          std::string sensorValue = val1;`);
+                                }
+
+                                // Build full display value with prefix, unit, postfix
+                                lines.push(`          std::string fullValue = "${prefix}" + sensorValue + "${unit}" + "${postfix}";`);
+
+                                // Render based on value_format
+                                if (valueFormat === "label_value" && title) {
+                                    // Label and value on same line
+                                    // Calculate approximate label width (rough estimate: ~0.6 * fontSize * charCount)
+                                    const labelText = title + ": ";
+                                    const labelWidth = Math.ceil(labelFontSize * 0.6 * labelText.length);
+
+                                    // Determine horizontal alignment
+                                    let labelX = w.x;
+                                    let espLabelAlign = "TextAlign::TOP_LEFT";
+                                    if (align.includes("CENTER")) {
+                                        // For center, we still left-align both but position them centered as a group
+                                        labelX = w.x;
+                                        espLabelAlign = "TextAlign::TOP_LEFT";
+                                    } else if (align.includes("RIGHT")) {
+                                        espLabelAlign = "TextAlign::TOP_RIGHT";
+                                        labelX = w.x + w.width;
+                                    }
+
+                                    lines.push(`          // label_value format: label and value on same line`);
+                                    lines.push(`          it.printf(${labelX}, ${w.y}, id(${labelFontId}), ${color}, ${espLabelAlign}, "${title}: %s", fullValue.c_str());`);
+
+                                } else if (valueFormat === "label_newline_value" && title) {
+                                    // Label on first line, value on second line  
+                                    const lineSpacing = labelFontSize + 2;
+                                    let espAlign = `TextAlign::${align}`;
+
+                                    // Get X position based on alignment
+                                    let xPos = w.x;
+                                    if (align.includes("CENTER")) {
+                                        xPos = w.x + Math.floor(w.width / 2);
+                                    } else if (align.includes("RIGHT")) {
+                                        xPos = w.x + w.width;
+                                    }
+
+                                    lines.push(`          // label_newline_value format: label on line 1, value on line 2`);
+                                    lines.push(`          it.printf(${xPos}, ${w.y}, id(${labelFontId}), ${color}, ${espAlign}, "${title}");`);
+                                    lines.push(`          it.printf(${xPos}, ${w.y} + ${lineSpacing}, id(${valueFontId}), ${color}, ${espAlign}, "%s", fullValue.c_str());`);
+
+                                } else {
+                                    // value_only or no title - just show the value
+                                    let espAlign = `TextAlign::${align}`;
+                                    let xPos = w.x;
+                                    if (align.includes("CENTER")) {
+                                        xPos = w.x + Math.floor(w.width / 2);
+                                    } else if (align.includes("RIGHT")) {
+                                        xPos = w.x + w.width;
+                                    }
+
+                                    lines.push(`          it.printf(${xPos}, ${w.y}, id(${valueFontId}), ${color}, ${espAlign}, "%s", fullValue.c_str());`);
+                                }
+
+                                lines.push(`        }`);
                             }
+
 
                         } else if (t === "icon") {
                             const code = (p.code || "F0595").replace(/^0x/i, "");
@@ -1737,13 +1888,22 @@ function generateSnippetLocally() {
         return warningLines.join("\n") + "\n\n" + generateScriptSection(payload, pagesLocal);
     }
 
+    // Replace the font marker with actual font definitions
+    // This ensures fonts are defined BEFORE the display section
+    const markerIndex = lines.indexOf(fontInsertMarker);
+    if (markerIndex !== -1) {
+        lines.splice(markerIndex, 1, ...fontLines);
+    }
+
     // Correctly return joined lines without appending script again (since we injected it earlier)
     return lines.join("\n");
 }
 
 
-function generateScriptSection(payload, pagesLocal) {
+function generateScriptSection(payload, pagesLocal, profile = {}) {
     const lines = [];
+    // Determine display ID based on device type (LCD vs e-paper)
+    const displayId = profile.features?.lcd ? "my_display" : "epaper_display";
 
     // Manual refresh only mode - minimal script
     if (payload.manual_refresh_only) {
@@ -1762,7 +1922,7 @@ function generateScriptSection(payload, pagesLocal) {
         lines.push("    mode: restart");
         lines.push("    then:");
         lines.push("      # Update screen immediately");
-        lines.push("      - component.update: epaper_display");
+        lines.push(`      - component.update: ${displayId}`);
         lines.push("      ");
         lines.push("      # Enter deep sleep (wakes up after sleep_duration)");
         lines.push("      - deep_sleep.enter: deep_sleep_1");
@@ -1821,7 +1981,7 @@ function generateScriptSection(payload, pagesLocal) {
                     auto now = id(ha_time).now();
                     return now.is_valid() && (now.minute == 0);
                 then:
-                  - component.update: epaper_display
+                  - component.update: ${displayId}
                 else:
                   - logger.log: "Deep sleep mode: skipping refresh until the top of the hour."
             - deep_sleep.enter:
@@ -1901,11 +2061,11 @@ function generateScriptSection(payload, pagesLocal) {
             imageCases.join("\n"),
             "                }",
             "                if (!triggered) {",
-            "                  id(epaper_display).update();",
+            "                  id(${displayId}).update();",
             "                }"
         ].join("\n");
     } else {
-        updateLambda = "            - component.update: epaper_display";
+        updateLambda = `            - component.update: ${displayId}`;
     }
 
     // Assemble the full script

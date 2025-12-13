@@ -93,11 +93,12 @@ function parseSnippetYamlOffline(yamlText) {
     const pageMap = new Map();
     const intervalMap = new Map();
     const nameMap = new Map();
+    const darkModeMap = new Map(); // Per-page dark mode setting
     let currentPageIndex = null;
 
     for (const line of lambdaLines) {
         // Native Lambda page check
-        let pageMatch = line.match(/if\s*\(\s*(?:id\s*\(\s*display_page\s*\)|page)\s*==\s*(\d+)\s*\)/);
+        let pageMatch = line.match(/if\s*\(\s*(?:id\s*\(\s*display_page\s*\)|page|currentPage)\s*==\s*(\d+)\s*\)/);
         if (pageMatch) {
             currentPageIndex = parseInt(pageMatch[1], 10);
             if (!pageMap.has(currentPageIndex)) {
@@ -131,6 +132,12 @@ function parseSnippetYamlOffline(yamlText) {
         if (nameMatch && currentPageIndex !== null) {
             nameMap.set(currentPageIndex, nameMatch[1]);
         }
+
+        // Parse per-page dark mode setting
+        const darkModeMatch = line.match(/\/\/\s*page:dark_mode\s+"(.+)"/);
+        if (darkModeMatch && currentPageIndex !== null) {
+            darkModeMap.set(currentPageIndex, darkModeMatch[1]);
+        }
     }
 
     if (pageMap.size === 0) {
@@ -146,9 +153,11 @@ function parseSnippetYamlOffline(yamlText) {
             id: `page_${idx}`,
             name: nameMap.has(idx) ? nameMap.get(idx) : `Page ${idx + 1}`,
             refresh_s: intervalMap.has(idx) ? intervalMap.get(idx) : null,
+            dark_mode: darkModeMap.has(idx) ? darkModeMap.get(idx) : "inherit",
             widgets: []
         }))
     };
+
 
     currentPageIndex = 0;
 
@@ -198,7 +207,7 @@ function parseSnippetYamlOffline(yamlText) {
         if (!trimmed || trimmed.startsWith("#")) continue;
 
         // Native Lambda Page Check
-        let pageMatch = trimmed.match(/if\s*\(\s*(?:id\s*\(\s*display_page\s*\)|page)\s*==\s*(\d+)\s*\)/);
+        let pageMatch = trimmed.match(/if\s*\(\s*(?:id\s*\(\s*display_page\s*\)|page|currentPage)\s*==\s*(\d+)\s*\)/);
         if (pageMatch) {
             currentPageIndex = parseInt(pageMatch[1], 10);
             continue;
@@ -303,7 +312,8 @@ function parseSnippetYamlOffline(yamlText) {
                         date_font_size: parseInt(p.date_font || 16, 10),
                         color: p.color || "black",
                         italic: (p.italic === "true" || p.italic === true || p.font_style === "italic"),
-                        font_family: p.font_family || "Roboto"
+                        font_family: p.font_family || "Roboto",
+                        text_align: p.align || p.text_align || "CENTER"
                     };
                 } else if (widgetType === "progress_bar") {
                     widget.props = {

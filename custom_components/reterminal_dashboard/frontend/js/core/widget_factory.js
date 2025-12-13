@@ -5,20 +5,40 @@
 
 class WidgetFactory {
     /**
+     * Determines the effective dark mode for the current page.
+     * Per-page setting overrides global setting.
+     * @returns {boolean} true if dark mode should be active
+     */
+    static getEffectiveDarkMode() {
+        const page = AppState?.getCurrentPage?.();
+        const pageDarkMode = page?.dark_mode;
+
+        // "inherit" or undefined = use global setting
+        // "dark" = force dark mode
+        // "light" = force light mode
+        if (pageDarkMode === "dark") return true;
+        if (pageDarkMode === "light") return false;
+        return !!(AppState && AppState.settings && AppState.settings.dark_mode);
+    }
+
+    /**
      * Gets the default foreground color based on dark mode setting.
      * Returns "white" if dark mode (black background) is enabled, otherwise "black".
+     * Uses per-page dark mode when available.
      */
     static getDefaultColor() {
-        return (AppState && AppState.settings && AppState.settings.dark_mode) ? "white" : "black";
+        return WidgetFactory.getEffectiveDarkMode() ? "white" : "black";
     }
 
     /**
      * Gets the default background color based on dark mode setting.
      * Returns "black" if dark mode is enabled, otherwise "white".
+     * Uses per-page dark mode when available.
      */
     static getDefaultBgColor() {
-        return (AppState && AppState.settings && AppState.settings.dark_mode) ? "black" : "white";
+        return WidgetFactory.getEffectiveDarkMode() ? "black" : "white";
     }
+
 
     static createWidget(type) {
         const id = generateId();
@@ -82,7 +102,8 @@ class WidgetFactory {
                     date_font_size: 16,
                     color: defaultColor,
                     italic: false,
-                    font_family: "Roboto"
+                    font_family: "Roboto",
+                    text_align: "CENTER"
                 };
                 break;
 

@@ -558,10 +558,22 @@
             Leave empty for default. Set to 0 for manual refresh only. Recommended: 60-300 seconds.
           </div>
         </div>
+        <div class="field">
+          <div class="prop-label">Dark Mode</div>
+          <select id="pageSettingsDarkMode" class="prop-input">
+            <option value="inherit">Use Global Setting</option>
+            <option value="light">Light Mode (white background)</option>
+            <option value="dark">Dark Mode (black background)</option>
+          </select>
+          <div style="font-size: 9px; color: var(--muted); margin-top: 2px;">
+            Override the global dark mode setting for this page only.
+          </div>
+        </div>
       </div>
       <div class="modal-actions">
         <button id="pageSettingsSave" class="btn">Save</button>
       </div>
+
     </div>
   </div>
 

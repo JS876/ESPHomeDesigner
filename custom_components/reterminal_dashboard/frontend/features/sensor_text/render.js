@@ -17,7 +17,7 @@
         const separator = props.separator || " ~ ";
 
         let displayValue = "--";
-        let displayUnit = unitProp;
+        let displayUnit = props.hide_unit ? "" : unitProp;
 
         // Helper to format a single value
         const formatValue = (eId) => {
@@ -31,8 +31,8 @@
                     if (match) {
                         const val = parseFloat(match[1]);
                         const extractedUnit = match[2] || "";
-                        // Capture unit from first entity if not set manually
-                        if (eId === entityId && (unitProp === undefined || unitProp === "")) {
+                        // Capture unit from first entity if not set manually, AND not hidden
+                        if (eId === entityId && (unitProp === undefined || unitProp === "") && !props.hide_unit) {
                             displayUnit = extractedUnit;
                         }
                         if (!isNaN(val)) {
@@ -43,7 +43,7 @@
                         }
                     }
                     // Fallback: update unit from attributes if needed
-                    if (eId === entityId && (unitProp === undefined || unitProp === "") && entityObj.attributes && entityObj.attributes.unit_of_measurement) {
+                    if (eId === entityId && (unitProp === undefined || unitProp === "") && entityObj.attributes && entityObj.attributes.unit_of_measurement && !props.hide_unit) {
                         displayUnit = entityObj.attributes.unit_of_measurement;
                     }
                     return strState;

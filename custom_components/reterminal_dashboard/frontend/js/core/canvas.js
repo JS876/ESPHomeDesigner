@@ -74,12 +74,14 @@ class Canvas {
             this.canvas.classList.remove("light-mode");
         }
 
-        // Apply black background mode for canvas preview
-        if (AppState.settings.dark_mode) {
+        // Apply black background mode for canvas preview (per-page overrides global)
+        const effectiveDarkMode = this.getEffectiveDarkMode();
+        if (effectiveDarkMode) {
             this.canvas.classList.add("dark");
         } else {
             this.canvas.classList.remove("dark");
         }
+
 
         if (!page) return;
 
@@ -120,6 +122,23 @@ class Canvas {
         }
     }
 
+    /**
+     * Determines the effective dark mode for the current page.
+     * Per-page setting overrides global setting.
+     * @returns {boolean} true if dark mode should be active
+     */
+    getEffectiveDarkMode() {
+        const page = AppState.getCurrentPage();
+        const pageDarkMode = page?.dark_mode;
+
+        // "inherit" or undefined = use global setting
+        // "dark" = force dark mode
+        // "light" = force light mode
+        if (pageDarkMode === "dark") return true;
+        if (pageDarkMode === "light") return false;
+        return !!AppState.settings.dark_mode;
+    }
+
     _addResizeHandle(el) {
         const handle = document.createElement("div");
         handle.className = "widget-resize-handle";
@@ -132,6 +151,7 @@ class Canvas {
 
         el.appendChild(handle);
     }
+
 
     _renderLegacyWidget(el, widget) {
         const type = widget.type;

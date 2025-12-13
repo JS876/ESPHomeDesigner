@@ -15,7 +15,7 @@
 - **New Repository**: `https://github.com/koosoli/ESPHomeDesigner`
 
 ### 🎉 New Features
-- **Dark Mode Option**: Added a toggle in Device Settings to enable "Dark Mode" (black background with white widgets).
+- **Dark Mode Option**: Added a toggle in Device Settings to enable global "Dark Mode" (black background with white widgets). Individual pages can override this setting via Page Settings with options: "Use Global Setting", "Light Mode", or "Dark Mode".
 - **Gray Color Support**: Full support for "Gray" color has been implemented for icons, text, and all other widgets.
 - **Sensor Text Intelligence**:
   - **Smart Detection**: New logic automatically detects if a sensor state is a string or a number.
@@ -25,6 +25,7 @@
 - **Text Sensor Enhancements**:
   - **Dual Sensor Support**: Now supports displaying two sensors in one widget.
   - **Prefix & Suffix**: Added settings for custom prefix and suffix text.
+  - **Hide Default Unit**: Added checkbox to suppress the default unit, allowing for cleaner custom formatting with Postfix.
 - **Time & Date Widget**: Added more formatting options for date display.
 
 #### Calendar Widget
@@ -42,6 +43,10 @@
 ### 🐛 Bug Fixes
 - **Feature Forecast**: Resolved bug fixes for the weather forecast feature; it should now work correctly.
 - **Graph Widget**: Fixed issue where graphs would intersect/overlap incorrectly.
+- **Date/Time Alignment Persistence**: Fixed an issue where alignment settings were lost when updating layout from YAML.
+- **Duplicate Config Fields**: Resolved an issue where duplicate "Postfix" fields appeared in the Sensor Text widget properties.
+- **Disappearing Sensor**: Addressed a root cause where manual YAML editing (required due to UI issues) caused sensor configuration loss.
+
 
 ---
 

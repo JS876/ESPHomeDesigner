@@ -142,8 +142,21 @@ function openEntityPickerForWidget(widget, inputEl, callback) {
                         const newProps = { ...widget.props };
 
                         // Auto-populate unit from attributes if available
+                        // Check both attributes.unit_of_measurement and top-level unit (API returns both)
+                        console.log(`[entity_picker] Unit detection for ${e.entity_id}:`, {
+                            hasAttributes: !!e.attributes,
+                            attrUnit: e.attributes?.unit_of_measurement,
+                            topLevelUnit: e.unit
+                        });
                         if (e.attributes && e.attributes.unit_of_measurement) {
                             newProps.unit = e.attributes.unit_of_measurement;
+                            console.log(`[entity_picker] Set unit from attributes: "${newProps.unit}"`);
+                        } else if (e.unit) {
+                            // Fallback to top-level unit field (from ha_api.js)
+                            newProps.unit = e.unit;
+                            console.log(`[entity_picker] Set unit from top-level: "${newProps.unit}"`);
+                        } else {
+                            console.log(`[entity_picker] No unit found for entity`);
                         }
 
                         // Auto-detect text sensor: if state is non-numeric, mark as text sensor

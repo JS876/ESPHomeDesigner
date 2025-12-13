@@ -11,7 +11,7 @@ window.DEVICE_PROFILES = {
         displayModel: "7.50inv2",
         displayPlatform: "waveshare_epaper",
         pins: {
-            display: { cs: "GPIO10", dc: "GPIO11", reset: "GPIO12", busy: "GPIO13" },
+            display: { cs: "GPIO10", dc: "GPIO11", reset: { number: "GPIO12", inverted: false }, busy: { number: "GPIO13", inverted: true } },
             i2c: { sda: "GPIO19", scl: "GPIO20" },
             spi: { clk: "GPIO7", mosi: "GPIO9" },
             batteryEnable: "GPIO21",
@@ -36,7 +36,7 @@ window.DEVICE_PROFILES = {
         displayModel: "Seeed-reTerminal-E1002",
         displayPlatform: "epaper_spi",
         pins: {
-            display: { cs: "GPIO10", dc: "GPIO11", reset: "GPIO12", busy: "GPIO13" },
+            display: { cs: null, dc: null, reset: null, busy: null },
             i2c: { sda: "GPIO19", scl: "GPIO20" },
             spi: { clk: "GPIO7", mosi: "GPIO9" },
             batteryEnable: "GPIO21",
@@ -61,7 +61,7 @@ window.DEVICE_PROFILES = {
         displayModel: "7.50inv2",
         displayPlatform: "waveshare_epaper",
         pins: {
-            display: { cs: "GPIO6", dc: "GPIO5", reset: "GPIO10", busy: "GPIO4" },
+            display: { cs: "GPIO6", dc: "GPIO5", reset: { number: "GPIO10", inverted: false }, busy: { number: "GPIO4", inverted: true } },
             i2c: { sda: "GPIO1", scl: "GPIO2" },
             spi: { clk: "GPIO7", mosi: "GPIO8" },
             batteryEnable: null,

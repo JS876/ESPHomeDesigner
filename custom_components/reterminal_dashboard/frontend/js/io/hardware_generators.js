@@ -222,7 +222,25 @@ function generateDisplaySection(profile) {
         if (profile.displayModel) lines.push(`    model: "${profile.displayModel}"`);
 
         lines.push("    update_interval: never");
-        lines.push("    full_update_every: 30");
+
+        // ============================================================================
+        // IMPORTANT: full_update_every is ONLY supported for monochrome e-paper displays!
+        // DO NOT add full_update_every for color e-paper displays like:
+        //   - 7.30in-f (PhotoPainter 7-color)
+        //   - Seeed-reTerminal-E1002 (6-color)
+        //   - Any other multi-color e-paper
+        // Adding it to unsupported models causes ESPHome compilation errors.
+        // See: https://esphome.io/components/display/waveshare_epaper.html
+        // ============================================================================
+        const modelsWithFullUpdate = [
+            "1.54in", "1.54inv2", "2.13in", "2.13in-ttgo", "2.13in-ttgo-b1",
+            "2.13in-ttgo-b73", "2.13in-ttgo-b74", "2.13in-ttgo-dke", "2.13inv2", "2.13inv3",
+            "2.90in", "2.90in-dke", "2.90inv2", "2.90inv2-r2", "7.50inv2", "7.50inv2p",
+            "gdew029t5", "gdey029t94", "gdey042t81", "gdey0583t81"
+        ];
+        if (profile.displayModel && modelsWithFullUpdate.includes(profile.displayModel)) {
+            lines.push("    full_update_every: 30");
+        }
         lines.push("");
     }
 
@@ -278,9 +296,12 @@ function generateSensorSection(profile, widgetSensorLines = [], displayId = "my_
         lines.push("    update_interval: 60s");
     }
 
-    // 3. SHTC3 (Temperature/Humidity)
+    // 3. SHTC3 (Temperature/Humidity) - Uses shtcx platform in ESPHome
     if (hasShtc3) {
-        lines.push("  - platform: shtc3");
+        lines.push("  - platform: shtcx");
+        lines.push("    id: shtc3_sensor");
+        lines.push("    i2c_id: bus_a");
+        lines.push("    address: 0x70");
         lines.push("    temperature:");
         lines.push("      name: \"Temperature\"");
         lines.push("    humidity:");
@@ -404,12 +425,48 @@ function generateButtonSection(profile, numPages, displayId = "my_display") {
     lines.push("            }");
     lines.push(`        - component.update: ${displayId}`);
 
-    if (profile.features.buzzer) {
+    // Refresh Display button
+    lines.push("  - platform: template");
+    lines.push("    name: \"Refresh Display\"");
+    lines.push("    on_press:");
+    lines.push("      then:");
+    lines.push(`        - component.update: ${displayId}`);
+
+    // Individual page buttons (Go to Page 1, Go to Page 2, etc.)
+    for (let i = 0; i < numPages; i++) {
         lines.push("  - platform: template");
-        lines.push("    name: \"Beep\"");
+        lines.push(`    name: "Go to Page ${i + 1}"`);
         lines.push("    on_press:");
         lines.push("      then:");
-        lines.push("        - rtttl.play: \"beep:d=4,o=5,b=100:16p,16c6\"");
+        lines.push(`        - lambda: 'id(display_page) = ${i};'`);
+        lines.push(`        - component.update: ${displayId}`);
+    }
+
+    if (profile.features.buzzer) {
+        lines.push("  # Buzzer Sounds");
+        lines.push("  - platform: template");
+        lines.push("    name: \"Play Beep Short\"");
+        lines.push("    icon: \"mdi:bell-ring\"");
+        lines.push("    on_press:");
+        lines.push("      - rtttl.play: \"beep:d=32,o=5,b=200:16e6\"");
+        lines.push("");
+        lines.push("  - platform: template");
+        lines.push("    name: \"Play Beep OK\"");
+        lines.push("    icon: \"mdi:check-circle-outline\"");
+        lines.push("    on_press:");
+        lines.push("      - rtttl.play: \"ok:d=16,o=5,b=200:e6\"");
+        lines.push("");
+        lines.push("  - platform: template");
+        lines.push("    name: \"Play Beep Error\"");
+        lines.push("    icon: \"mdi:alert-circle-outline\"");
+        lines.push("    on_press:");
+        lines.push("      - rtttl.play: \"error:d=16,o=5,b=200:c6\"");
+        lines.push("");
+        lines.push("  - platform: template");
+        lines.push("    name: \"Play Star Wars\"");
+        lines.push("    icon: \"mdi:music-note\"");
+        lines.push("    on_press:");
+        lines.push("      - rtttl.play: \"StarWars:d=4,o=5,b=45:32p,32f,32f,32f,8a#.,8f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32c,8a#.6,4f.6,32d#,32d,32d#,8c6\"");
     }
 
     lines.push("");
@@ -425,13 +482,30 @@ function generatePSRAMSection(profile) {
     const hasPsram = (profile.features && profile.features.psram) || (profile.features && profile.features.features && profile.features.features.psram);
     if (!hasPsram) return [];
 
-    return [
-        "psram:",
-        "  mode: octal",
-        "  speed: 80MHz",
-        ""
-    ];
+    // ============================================================================
+    // IMPORTANT: PSRAM mode varies by device!
+    // - Most ESP32-S3 boards use QUAD SPI PSRAM (mode: quad)
+    // - Some newer boards use OCTAL SPI PSRAM (mode: octal)
+    // - Using the wrong mode causes boot loops!
+    // 
+    // If no psram_mode is specified in profile, we omit the psram section entirely
+    // and let ESPHome auto-detect (safest approach).
+    // ============================================================================
+
+    // Check if profile specifies a PSRAM mode, otherwise let ESPHome auto-detect
+    if (profile.psram_mode) {
+        return [
+            "psram:",
+            `  mode: ${profile.psram_mode}`,
+            "  speed: 80MHz",
+            ""
+        ];
+    }
+
+    // Default: let ESPHome auto-detect PSRAM (safest for unknown boards)
+    return [];
 }
+
 
 /**
  * Generates AXP2101 PMIC section (Critical for PhotoPainter)

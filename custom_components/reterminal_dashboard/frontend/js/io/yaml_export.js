@@ -119,7 +119,18 @@ function generateSnippetLocally() {
         lines.push("#       - script.execute: manage_run_and_sleep");
         lines.push("#");
     } else {
-        lines.push("#         (See device documentation for specific on_boot requirements if any)");
+        lines.push("#         Paste this under 'esphome:' in your YAML:");
+        lines.push("#");
+        lines.push("#   on_boot:");
+        lines.push("#     priority: 600");
+        lines.push("#     then:");
+        if (getDeviceModel() !== "trmnl") {
+            lines.push("#       - output.turn_on: bsp_battery_enable");
+        }
+        lines.push("#       - delay: 2s");
+        lines.push("#       - component.update: epaper_display");
+        lines.push("#       - script.execute: manage_run_and_sleep");
+        lines.push("#");
     }
     lines.push("# STEP 4: Paste this ENTIRE snippet after the captive_portal: line");
     lines.push("#");
@@ -295,7 +306,19 @@ function generateSnippetLocally() {
         });
     });
 
-
+    // Add weather forecast high/low sensors (numeric) if weather_forecast widgets exist
+    if (weatherForecastWidgets.length > 0) {
+        for (let day = 0; day < 5; day++) {
+            widgetSensorLines.push(`  - platform: homeassistant`);
+            widgetSensorLines.push(`    id: weather_high_day${day}`);
+            widgetSensorLines.push(`    entity_id: sensor.weather_forecast_day_${day}_high`);
+            widgetSensorLines.push(`    internal: true`);
+            widgetSensorLines.push(`  - platform: homeassistant`);
+            widgetSensorLines.push(`    id: weather_low_day${day}`);
+            widgetSensorLines.push(`    entity_id: sensor.weather_forecast_day_${day}_low`);
+            widgetSensorLines.push(`    internal: true`);
+        }
+    }
 
     // Call generic sensor generator
     lines.push(...generateSensorSection(profile, widgetSensorLines, displayId));
@@ -712,6 +735,12 @@ function generateSnippetLocally() {
     const fontInsertMarker = "__FONT_INSERT_MARKER__";
     lines.push(fontInsertMarker);
 
+    // ============================================================================
+    // IMPORTANT: DO NOT USE LOCAL FONT FILES (except Material Design Icons)!
+    // All fonts MUST use Google Fonts (type: gfonts) so users don't need to
+    // manually download and place .ttf files. The only exception is MDI icons
+    // which are not available on Google Fonts and require a local file.
+    // ============================================================================
     const addFont = (family, weight, size, italic = false) => {
         const safeFamily = family.replace(/\s+/g, "_").toLowerCase();
         const italicSuffix = italic ? "_italic" : "";
@@ -720,40 +749,35 @@ function generateSnippetLocally() {
         if (!definedFontIds.has(id)) {
             definedFontIds.add(id);
 
-            // Map weights to standard Google Fonts file names
+            // Map weights to Google Fonts weight values for URL generation
             // 100=Thin, 200=ExtraLight, 300=Light, 400=Regular, 500=Medium, 600=SemiBold, 700=Bold, 800=ExtraBold, 900=Black
-            let type = "Regular";
-            if (weight >= 900) type = "Black";
-            else if (weight >= 800) type = "ExtraBold";
-            else if (weight >= 700) type = "Bold";
-            else if (weight >= 600) type = "SemiBold";
-            else if (weight >= 500) type = "Medium";
-            else if (weight >= 400) type = "Regular";
-            else if (weight >= 300) type = "Light";
-            else if (weight >= 200) type = "ExtraLight";
-            else type = "Thin";
+            const weightNum = parseInt(weight) || 400;
 
-            // If italic, append Italic
-            if (italic) {
-                if (type === "Regular") type = "Italic";
-                else type = type + "Italic";
-            }
-
-            // Handle MDI Icons special case
+            // Handle MDI Icons special case (still needs local file)
             if (family === "Material Design Icons") {
                 fontLines.push(`  - file: "fonts/materialdesignicons-webfont.ttf"`);
                 fontLines.push(`    id: ${id}`);
                 fontLines.push(`    size: ${size}`);
                 fontLines.push("    glyphs:");
-                fontLines.push("      - \"\\U000F0000\"-\"\\U000F1AF0\""); // Full MDI range
+                fontLines.push("      - \"\\U000F0000\" - \"\\U000F1AF0\""); // Full MDI range
             } else {
-                fontLines.push(`  - file: "fonts/${family}-${type}.ttf"`);
+                // Use Google Fonts URL - ESPHome can fetch directly!
+                // Format: https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap
+                // ESPHome uses: file: "gfonts://Roboto" or file: { family: Roboto, weight: 400, italic: true }
+                fontLines.push(`  - file:`);
+                fontLines.push(`      type: gfonts`);
+                fontLines.push(`      family: ${family}`);
+                fontLines.push(`      weight: ${weightNum}`);
+                if (italic) {
+                    fontLines.push(`      italic: true`);
+                }
                 fontLines.push(`    id: ${id}`);
                 fontLines.push(`    size: ${size}`);
             }
         }
         return id;
     };
+
 
     // Default Font
     addFont("Roboto", 400, 20); // Base font
@@ -844,6 +868,11 @@ function generateSnippetLocally() {
                 if (cl === "white") return "COLOR_WHITE";
                 if (cl === "black") return "COLOR_BLACK";
                 if (cl === "gray" || cl === "grey") return "COLOR_BLACK"; // Dithered later
+                if (cl === "red") return "COLOR_RED";
+                if (cl === "green") return "COLOR_GREEN";
+                if (cl === "blue") return "COLOR_BLUE";
+                if (cl === "yellow") return "COLOR_YELLOW";
+                if (cl === "orange") return "COLOR_ORANGE";
                 return "COLOR_BLACK";
             };
 
@@ -867,22 +896,31 @@ function generateSnippetLocally() {
             const RECT_Y_OFFSET = -15;
             const TEXT_Y_OFFSET = 0;
 
-            lines.push("      const auto COLOR_WHITE = Color(255, 255, 255, 0);"); // Transparent white? Or standard. E-paper logic.
-            lines.push("      const auto COLOR_BLACK = Color(0, 0, 0, 255);");
-            lines.push("      const auto COLOR_RED = Color(255, 0, 0, 0);"); // Added Red
-            lines.push("      const auto COLOR_GREEN = Color(0, 255, 0, 0);"); // Added Green
-            lines.push("      const auto COLOR_BLUE = Color(0, 0, 255, 0);"); // Added Blue
-            lines.push("      const auto COLOR_YELLOW = Color(255, 255, 0, 0);"); // Added Yellow
-            lines.push("      const auto COLOR_ORANGE = Color(255, 165, 0, 0);"); // Added Orange
+            lines.push("      const auto COLOR_WHITE = Color(255, 255, 255);");
+            // ============================================================================
+            // COLOR MAPPING FOR 7-COLOR ACeP DISPLAYS (7.30in-f PhotoPainter, etc.)
+            // These displays use an indexed 7-color palette, NOT true RGB.
+            // The ESPHome waveshare_epaper driver maps RGB to palette indices.
+            // Using 3-argument Color(r,g,b) format for cleaner palette matching.
+            // Palette: Black(0), White(1), Green(2), Blue(3), Red(4), Yellow(5), Orange(6)
+            // ============================================================================
+            lines.push("      const auto COLOR_BLACK = Color(0, 0, 0);");
+            lines.push("      const auto COLOR_GREEN = Color(0, 255, 0);");
+            lines.push("      const auto COLOR_BLUE = Color(0, 0, 255);");
+            lines.push("      const auto COLOR_RED = Color(255, 0, 0);");
+            lines.push("      const auto COLOR_YELLOW = Color(255, 255, 0);");
+            lines.push("      const auto COLOR_ORANGE = Color(255, 128, 0);");
             lines.push("      const auto COLOR_OFF = COLOR_WHITE;");
             lines.push("      const auto COLOR_ON = COLOR_BLACK;");
             lines.push("");
 
-            // Dither Helper
+            // Dither Helper - draws a checkerboard pattern (black and white alternating)
             lines.push("      auto apply_grey_dither_mask = [&](int x, int y, int w, int h) {");
             lines.push("          for (int i = 0; i < w; i++) {");
             lines.push("              for (int j = 0; j < h; j++) {");
-            lines.push("                  if ((x + i + y + j) % 2 != 0) {");
+            lines.push("                  if ((x + i + y + j) % 2 == 0) {");
+            lines.push("                      it.draw_pixel_at(x + i, y + j, COLOR_ON);");
+            lines.push("                  } else {");
             lines.push("                      it.draw_pixel_at(x + i, y + j, COLOR_OFF);");
             lines.push("                  }");
             lines.push("              }");
@@ -936,24 +974,41 @@ function generateSnippetLocally() {
 
             // PAGE LOOP
             lines.push(`      int currentPage = id(display_page);`);
-            // Dark mode bg
-            lines.push(`      // Clear screen`);
-            if (payload.dark_mode) {
-                lines.push(`      it.fill(COLOR_BLACK);`);
-                lines.push(`      // Invert text colors by default? handled in widgets`);
-            } else {
-                lines.push(`      it.fill(COLOR_WHITE);`);
-            }
 
             pagesLocal.forEach((page, pageIdx) => {
                 lines.push(`      if (currentPage == ${pageIdx}) {`);
+                // Export page name and dark mode for round-trip persistence
+                const pageName = page.name || `Page ${pageIdx + 1}`;
+                const pageDarkMode = page.dark_mode || "inherit";
+                lines.push(`        // page:name "${pageName}"`);
+                lines.push(`        // page:dark_mode "${pageDarkMode}"`);
+
+                // Determine effective dark mode for this page
+                // Page setting overrides global: "dark" = true, "light" = false, "inherit" = use global
+                let effectiveDarkMode;
+                if (pageDarkMode === "dark") {
+                    effectiveDarkMode = true;
+                } else if (pageDarkMode === "light") {
+                    effectiveDarkMode = false;
+                } else {
+                    effectiveDarkMode = !!payload.dark_mode;
+                }
+
+                // Clear screen with appropriate color for this page
+                lines.push(`        // Clear screen for this page`);
+                if (effectiveDarkMode) {
+                    lines.push(`        it.fill(COLOR_BLACK);`);
+                } else {
+                    lines.push(`        it.fill(COLOR_WHITE);`);
+                }
 
                 if (page.widgets) {
                     page.widgets.forEach(w => {
                         const t = (w.type || "").toLowerCase();
                         const p = w.props || {};
-                        const colorProp = p.color || (payload.dark_mode ? "white" : "black"); // Default
+                        const colorProp = p.color || (effectiveDarkMode ? "white" : "black"); // Default based on page dark mode
                         const color = getColorConst(colorProp);
+
 
                         // General setup
                         const align = p.text_align || "TOP_LEFT";
@@ -989,6 +1044,15 @@ function generateSnippetLocally() {
                             const prefix = (p.prefix || "").replace(/"/g, '\\"');
                             const postfix = (p.postfix || "").replace(/"/g, '\\"');
                             const unit = (p.unit || "").replace(/"/g, '\\"');
+                            let displayUnit = unit;
+                            if (p.hide_unit) {
+                                displayUnit = "";
+                            } else if (!displayUnit && entity && window.AppState && window.AppState.entityStates && window.AppState.entityStates[entity]) {
+                                const stateObj = window.AppState.entityStates[entity];
+                                if (stateObj.attributes && stateObj.attributes.unit_of_measurement) {
+                                    displayUnit = stateObj.attributes.unit_of_measurement.replace(/"/g, '\\"');
+                                }
+                            }
                             const separator = (p.separator || " ~ ").replace(/"/g, '\\"');
                             const isTextSensor = !!p.is_text_sensor;
                             const isLocalSensor = !!p.is_local_sensor;
@@ -1044,7 +1108,7 @@ function generateSnippetLocally() {
                                 }
 
                                 // Build full display value with prefix, unit, postfix
-                                lines.push(`          std::string fullValue = "${prefix}" + sensorValue + "${unit}" + "${postfix}";`);
+                                lines.push(`          std::string fullValue = "${prefix}" + sensorValue + "${displayUnit}" + "${postfix}";`);
 
                                 // Render based on value_format
                                 if (valueFormat === "label_value" && title) {
@@ -1801,22 +1865,31 @@ function generateSnippetLocally() {
                             const color = getColorConst(colorProp);
                             const fontFamily = p.font_family || "Roboto";
                             const italic = p.italic ? true : false;
+                            const align = p.text_align || "CENTER";
 
                             const timeFontId = addFont(fontFamily, 700, timeSize, italic);
                             const dateFontId = addFont(fontFamily, 400, dateSize, italic);
 
-                            lines.push(`        // widget:datetime id:${w.id} type:datetime x:${w.x} y:${w.y} w:${w.width} h:${w.height} format:${format} time_size:${timeSize} date_size:${dateSize} color:${colorProp} ${getCondProps(w)}`);
+                            lines.push(`        // widget:datetime id:${w.id} type:datetime x:${w.x} y:${w.y} w:${w.width} h:${w.height} format:${format} time_size:${timeSize} date_size:${dateSize} color:${colorProp} text_align:${align} italic:${italic} font_family:"${fontFamily}" ${getCondProps(w)}`);
                             lines.push(`        auto now = id(ha_time).now();`);
-                            const cx = w.x + Math.floor(w.width / 2);
+
+                            // Determine horizontal alignment for X position and TextAlign
+                            let hAlign = "CENTER";
+                            if (align.includes("LEFT")) hAlign = "LEFT";
+                            else if (align.includes("RIGHT")) hAlign = "RIGHT";
+
+                            const espAlign = `TextAlign::TOP_${hAlign}`;
+                            const xPos = getAlignX(align, w.x, w.width);
+
                             if (format === "time_only") {
-                                lines.push(`        it.strftime(${cx}, ${w.y}, id(${timeFontId}), ${color}, TextAlign::TOP_CENTER, "%H:%M", now);`);
+                                lines.push(`        it.strftime(${xPos}, ${w.y}, id(${timeFontId}), ${color}, ${espAlign}, "%H:%M", now);`);
                             } else if (format === "date_only") {
-                                lines.push(`        it.strftime(${cx}, ${w.y}, id(${dateFontId}), ${color}, TextAlign::TOP_CENTER, "%a, %b %d", now);`);
+                                lines.push(`        it.strftime(${xPos}, ${w.y}, id(${dateFontId}), ${color}, ${espAlign}, "%a, %b %d", now);`);
                             } else if (format === "weekday_day_month") {
-                                lines.push(`        it.strftime(${cx}, ${w.y}, id(${dateFontId}), ${color}, TextAlign::TOP_CENTER, "%A %d %B", now);`);
+                                lines.push(`        it.strftime(${xPos}, ${w.y}, id(${dateFontId}), ${color}, ${espAlign}, "%A %d %B", now);`);
                             } else {
-                                lines.push(`        it.strftime(${cx}, ${w.y}, id(${timeFontId}), ${color}, TextAlign::TOP_CENTER, "%H:%M", now);`);
-                                lines.push(`        it.strftime(${cx}, ${w.y} + ${timeSize} + 4, id(${dateFontId}), ${color}, TextAlign::TOP_CENTER, "%a, %b %d", now);`);
+                                lines.push(`        it.strftime(${xPos}, ${w.y}, id(${timeFontId}), ${color}, ${espAlign}, "%H:%M", now);`);
+                                lines.push(`        it.strftime(${xPos}, ${w.y} + ${timeSize} + 4, id(${dateFontId}), ${color}, ${espAlign}, "%a, %b %d", now);`);
                             }
 
                         } else if (t === "image" || t === "online_image" || t === "puppet") {

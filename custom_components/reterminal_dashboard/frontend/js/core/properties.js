@@ -390,7 +390,9 @@ class PropertiesPanel {
             this.addLabeledInput("Precision", "number", props.precision !== undefined ? props.precision : -1, (v) => updateProp("precision", parseInt(v, 10)));
             this.addLabeledInputWithDataList("Prefix", "text", props.prefix || "", ["€", "$", "£", "¥", "CHF", "kr"], (v) => updateProp("prefix", v));
             this.addLabeledInputWithDataList("Postfix", "text", props.postfix || "", [" kWh", " W", " V", " A", " °C", " %", " ppm", " lx"], (v) => updateProp("postfix", v));
-            this.addLabeledInput("Unit", "text", props.unit || "", (v) => updateProp("unit", v));
+
+            this.addLabeledInput("Unit (Manual helper)", "text", props.unit || "", (v) => updateProp("unit", v));
+            this.addCheckbox("Hide default unit", props.hide_unit || false, (v) => updateProp("hide_unit", v));
             this.addLabeledInput("Label Size", "number", props.label_font_size || 14, (v) => updateProp("label_font_size", parseInt(v, 10)));
             this.addLabeledInput("Value Size", "number", props.value_font_size || 20, (v) => updateProp("value_font_size", parseInt(v, 10)));
             this.addSelect("Color", props.color || "black", colors, (v) => updateProp("color", v));
@@ -461,6 +463,14 @@ class PropertiesPanel {
             }
 
             this.addCheckbox("Italic", props.italic || false, (v) => updateProp("italic", v));
+
+            // Text Alignment
+            const alignOptions = [
+                "TOP_LEFT", "TOP_CENTER", "TOP_RIGHT",
+                "CENTER_LEFT", "CENTER", "CENTER_RIGHT",
+                "BOTTOM_LEFT", "BOTTOM_CENTER", "BOTTOM_RIGHT"
+            ];
+            this.addSelect("Align", props.text_align || "CENTER", alignOptions, (v) => updateProp("text_align", v));
         }
         else if (type === "progress_bar") {
             this.addLabeledInputWithPicker("Entity ID", "text", widget.entity_id || "", (v) => {

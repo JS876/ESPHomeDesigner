@@ -5,6 +5,7 @@ class PageSettings {
         this.saveBtn = document.getElementById('pageSettingsSave');
         this.nameInput = document.getElementById('pageSettingsName');
         this.refreshInput = document.getElementById('pageSettingsRefresh');
+        this.darkModeInput = document.getElementById('pageSettingsDarkMode');
         this.pageIndex = -1;
     }
 
@@ -22,6 +23,10 @@ class PageSettings {
 
         if (this.nameInput) this.nameInput.value = page.name || "";
         if (this.refreshInput) this.refreshInput.value = page.refresh_s || "";
+        if (this.darkModeInput) {
+            // Default to "inherit" if not set
+            this.darkModeInput.value = page.dark_mode || "inherit";
+        }
 
         this.modal.classList.remove('hidden');
         this.modal.style.display = 'flex';
@@ -41,6 +46,7 @@ class PageSettings {
 
         const name = this.nameInput ? this.nameInput.value : page.name;
         const refresh = this.refreshInput ? parseInt(this.refreshInput.value, 10) : NaN;
+        const darkMode = this.darkModeInput ? this.darkModeInput.value : "inherit";
 
         page.name = name;
         if (!isNaN(refresh) && refresh > 0) {
@@ -48,6 +54,9 @@ class PageSettings {
         } else {
             delete page.refresh_s;
         }
+
+        // Save dark mode setting (store "inherit" to allow explicit clearing)
+        page.dark_mode = darkMode;
 
         AppState.setPages(AppState.pages); // Trigger update
         this.close();

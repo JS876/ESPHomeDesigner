@@ -1,7 +1,6 @@
-# reTerminal Dashboard Designer
+# ESPHome Designer
 
-
-**A visual drag-and-drop editor for ESPHome e-paper dashboards, running right inside Home Assistant.**
+**A visual drag-and-drop editor for ESPHome displays (E-Ink, OLED, LCD, Touch), running right inside Home Assistant.**
 
 
 
@@ -17,9 +16,11 @@
 
 **No more hand-coding ESPHome display lambdas! 🎉**
 
-Got an E-Ink Display with an ESP chip and frustrated with manually writing display code? Yeah, me too. So I built a drag-and-drop editor that runs right inside Home Assistant.
+Building a custom smart display for Home Assistant? Frustrated with manually writing C++ lambdas and guessing coordinates?
 
-Design your e-ink dashboard visually, click generate, flash it - done. No YAML wrestling required (unless you're into that).
+Design ESPHome displays right inside Home Assistant. This HACS integration offers a drag-and-drop editor with direct access to your sensor library via an intuitive entity picker.
+
+It enables you to build premium, touch-interactive dashboards for various ESP32-based devices (like the Seeed reTerminal, TRMNL, standard touch screens, and more) without writing a single line of display code.
 
 
 ## What Does It Do?
@@ -37,10 +38,10 @@ Design your e-ink dashboard visually, click generate, flash it - done. No YAML w
 
 ### 1. Install via HACS (Recommended)
 
-1. Add this repository to HACS as a custom repository
-2. Search for "reTerminal Dashboard Designer" and install
+1. Add `https://github.com/koosoli/ESPHomeDesigner` to HACS as a custom repository
+2. Search for "ESPHome Designer" and install
 3. Restart Home Assistant
-4. Go to **Settings** → **Devices & Services** → **Add Integration** → Search for "reTerminal Dashboard Designer"
+4. Go to **Settings** → **Devices & Services** → **Add Integration** → Search for "ESPHome Designer"
 
 ### 2. Manual Installation
 
@@ -81,12 +82,31 @@ Then create a new ESPHome device:
 
 Done! Your custom dashboard is now running on your device.
 
+### 6. Connect & Automate
+
+Once flashed, your device will come online.
+
+1. Go to **Settings** → **Devices & Services** in Home Assistant.
+2. Your device should be discovered (or you can add it via the ESPHome integration).
+3. **Configure it** to ensure Home Assistant connects to its API.
+
+### Philosophy: Design here, Automate there.
+
+Think of this tool as the **Frontend Designer** for your physical display.
+
+- **Use this tool** to make it look beautiful (pixel-perfect placement, fonts, icons).
+- **Use Home Assistant** for the logic.
+
+We expose everything (buttons, sensors, battery) back to Home Assistant. Does a button press toggle a light? Play a sound? Trigger a scene? **Do that in Home Assistant Automations**, where HA shines best.
+
 ## Widget Types
 
 - **Text** - Static labels and headers
   - Customizable font size (8-260px) - generates fonts automatically
-  - Color options: black, white, gray
+  - Color options: black, white, **gray** (renders as dithered pattern)
 - **Sensor Text** - Live values from Home Assistant entities
+  - **Smart Type Detection**: Automatically detects number vs string functionality
+  - **Manual Override**: "Is Text Sensor" option for forced text handling
   - Separate font sizes for label and value
   - Multiple display formats (value only, label + value, stacked)
 - **Icon** - Material Design Icons with customizable size and color
@@ -133,6 +153,27 @@ Done! Your custom dashboard is now running on your device.
   - Shows upcoming weather conditions with icons
   - Integrates with Home Assistant weather entities
 
+## LVGL Support (Experimental)
+
+**⚠️ Highly Experimental - Expect Bugs!**
+
+This tool includes experimental support for **LVGL (Light and Versatile Graphics Library)** widgets on LCD+Touch devices. LVGL enables interactive widgets like buttons, switches, sliders, and checkboxes that can control Home Assistant entities directly from the touchscreen.
+
+### Important Notes
+
+- **LCD+Touch devices only** - LVGL is designed for real-time displays, not e-paper
+- **Entire page switches to LVGL mode** if you add any LVGL widget
+- **High memory usage** - Requires ESP32-S3 with PSRAM
+- **May be unstable** - This feature is under active development
+
+### Available LVGL Widgets
+
+- Buttons, Switches, Checkboxes, Sliders (interactive, can trigger HA actions)
+- Arcs, Bars, Charts (display sensor values)
+- Labels, Images, QR Codes, and more
+
+For stable results, stick to **Native Mode** (standard widgets without LVGL prefix).
+
 ## Features
 
 - **Visual Editor** - Drag-and-drop canvas with snap-to-grid, live entity state updates
@@ -142,7 +183,7 @@ Done! Your custom dashboard is now running on your device.
 - **Page Management** - Drag & drop to reorder pages in the sidebar
 - **Productivity Tools** - Copy/Paste (Ctrl+C/V), Undo/Redo (Ctrl+Z/Y), and Z-Index layering support
 - **Canvas Controls** - Zoom in/out and recenter for precise editing
-- **Light/Dark Mode** - Choose your preferred theme
+- **Dark Mode Option** - Toggle "Dark Mode" in device settings for black backgrounds
 - **Hardware Integration** - Buttons, buzzer, temperature/humidity sensors exposed to HA
 - **Smart Generator** - Produces clean, additive YAML that doesn't conflict with your base config
 - **Template-Free Workflow** - No more manual template merging, just paste and go
@@ -150,6 +191,7 @@ Done! Your custom dashboard is now running on your device.
 - **Round-Trip Editing** - Import existing ESPHome display code back into the editor
 - **Battery Management** - Voltage monitoring, battery level percentage, icon indicators
 - **Power Saving** - Configurable refresh rates, deep sleep support for night hours
+- **Experimental LVGL Support** - (Beta) Support for LVGL widgets like Arc and Button on capable devices
 
 ## Technical Details
 
@@ -180,7 +222,9 @@ The workflow is safe and deterministic - same layout always produces the same YA
 **Currently Supported:**
 - Seeed Studio reTerminal E1001 (ESP32-S3, 800x480 e-paper, black/white)
 - Seeed Studio reTerminal E1002 (ESP32-S3, 800x480 e-paper, color)
+- Waveshare PhotoPainter (ESP32-S3, 7-Color e-paper)
 - TRMNL (ESP32-C3 e-paper device)
+- *More coming soon!* (Experimental devices marked as "untested" in editor)
 
 **Hardware Features Exposed:**
 - 3 physical buttons (GPIO 3/4/5)
@@ -212,8 +256,8 @@ All exposed as Home Assistant entities for use in automations.
 
 
 **Duplicate section errors?**
-- Only paste `globals`, `font`, `text_sensor`, `button`, `script`, `display` from generated snippet
-- Don't copy `output`, `rtttl`, `sensor`, `time` - these are in the hardware template
+- The generator now produces a complete, standalone configuration including `psram`, `i2c`, etc.
+- **Do not** use old hardware templates that define these sections. Rely on the generated code.
 
 **Compilation Fails ("Killed signal" / Out of Memory)?**
 If your Raspberry Pi crashes with `Killed signal terminated program`, it lacks the RAM for these fonts.
@@ -231,14 +275,6 @@ Add `compile_process_limit: 1` to your `esphome:` section in the YAML. This redu
    python -m esphome compile C:\esphome_build\reterminal.yaml
    ```
 5. **Upload**: Take the generated `.bin` file and upload it via the Home Assistant ESPHome dashboard (Install → Manual Download).
-
-## Contributing
-
-This is a passion project built to solve a real problem. Found a bug? Have an idea? Open an issue or PR!
-
-**Planned features:**
-- Color e-ink support
-- More device types (other ESP32-based e-paper displays)
 
 ## License
 

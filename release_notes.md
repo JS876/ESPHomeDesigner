@@ -2,6 +2,54 @@
 
 
 
+## v0.7.0 - Experimental LVGL & Enhancements
+
+**Release Date:** December 9, 2025
+
+### 🔧 Architecture Changes
+- **Decoupled Hardware Profile**: Hardware definition logic has been moved out of `yaml_export.js` into dedicated `hardware_generators.js` and `devices.js` files, significantly improving code maintainability and safety.
+
+### 🚀 Rebranding & Scope Expansion
+- **Project Renamed to ESPHome Designer**: Refleting our broader mission to support all display types.
+- **Support for More Displays**: We are moving beyond just e-ink to support OLED, LCD, and Touch displays.
+- **New Repository**: `https://github.com/koosoli/ESPHomeDesigner`
+
+### 🎉 New Features
+- **Dark Mode Option**: Added a toggle in Device Settings to enable global "Dark Mode" (black background with white widgets). Individual pages can override this setting via Page Settings with options: "Use Global Setting", "Light Mode", or "Dark Mode".
+- **Gray Color Support**: Full support for "Gray" color has been implemented for icons, text, and all other widgets.
+- **Sensor Text Intelligence**:
+  - **Smart Type Handling**: Decoupled text vs. numeric sensor registration. "Is Text Sensor" now forces a unique text-based internal ID, fixing "NaN" issues when an entity is previously registered as a number (e.g. in a graph).
+  - **Default Precision**: Sensor text widgets now default to 2 decimal places (e.g. `23.50`) instead of raw float output, improving default legibility. Precision can still be set to `-1` for raw output.
+
+- **Experimental LVGL Widgets**: Added experimental support for LVGL `button`, `arc`, `chart` (Line/Bar), `slider`, `bar`, `image`, and `qrcode` widgets.
+- **Text Sensor Enhancements**:
+  - **Dual Sensor Support**: Now supports displaying two sensors in one widget.
+  - **Prefix & Suffix**: Added settings for custom prefix and suffix text.
+  - **Hide Default Unit**: Added checkbox to suppress the default unit, allowing for cleaner custom formatting with Postfix.
+- **Time & Date Widget**: Added more formatting options for date display.
+
+#### Calendar Widget
+- **Rendering Improvements**: Significant improvements to calendar widget rendering and reliability.
+- **Full-Featured Calendar**: Monthly view with upcoming events list
+- **Customizable**: Configurable font sizes for all elements (Date, Day, Grid, Events), plus colors and border settings
+- **Smart Setup**: Built-in Python helper script downloader simplifies Home Assistant integration
+- **Accurate Preview**: What you see is what you get - preview reflects real dates and layout
+
+### 📱 New Hardware Support
+- **Waveshare PhotoPainter (ESP32-S3)**: Full support for the Waveshare ESP32-S3 PhotoPainter (7-Color E-Ink).
+- **Experimental Support**: Added support for more devices. Note that devices not yet fully verified are explicitly marked as "untested" in the device selector.
+
+
+### 🐛 Bug Fixes
+- **Feature Forecast**: Resolved bug fixes for the weather forecast feature; it should now work correctly.
+- **Graph Widget**: Fixed issue where graphs would intersect/overlap incorrectly.
+- **Date/Time Alignment Persistence**: Fixed an issue where alignment settings were lost when updating layout from YAML.
+- **Duplicate Config Fields**: Resolved an issue where duplicate "Postfix" fields appeared in the Sensor Text widget properties.
+- **Disappearing Sensor**: Addressed a root cause where manual YAML editing (required due to UI issues) caused sensor configuration loss.
+
+
+---
+
 ## v0.6.3 - Entity Handling Improvements
 
 **Release Date:** December 7, 2025
@@ -111,7 +159,8 @@
 - Color rendering for all widgets and shapes
 - Same easy workflow as E1001 - just select your device type
 
-#### TRMNL (ESP32-C3)
+
+#### trmnl (ESP32-C3)
 - **New device support**: TRMNL e-paper hardware now fully supported
 - Dedicated hardware template (`trmnl_lambda.yaml`)
 - Correct SPI and battery sensor configurations

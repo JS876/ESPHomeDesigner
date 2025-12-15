@@ -209,20 +209,15 @@ class LayoutManager {
     }
 
     getDeviceDisplayName(model) {
-        if (window.DEVICE_PROFILES && window.DEVICE_PROFILES[model]) {
-            return window.DEVICE_PROFILES[model].name;
-        }
         const names = {
             "reterminal_e1001": "E1001 (Mono)",
             "reterminal_e1002": "E1002 (Color)",
-            "trmnl": "TRMNL",
-            "esp32_s3_photopainter": "PhotoPainter (7-Color)"
+            "trmnl": "TRMNL"
         };
         // Also handle short codes (E1001, E1002, TRMNL)
         if (names[model]) return names[model];
         if (model === "E1001") return "E1001 (Mono)";
         if (model === "E1002") return "E1002 (Color)";
-        if (model === "PhotoPainter") return "PhotoPainter (7-Color)";
         if (model?.toLowerCase() === "trmnl") return "TRMNL";
         return model || "Unknown";
     }
@@ -364,7 +359,9 @@ class LayoutManager {
                         <div class="field">
                             <div class="prop-label">Device Type</div>
                             <select id="newLayoutDeviceType" class="prop-input">
-                                ${this.generateDeviceOptions()}
+                                <option value="E1001">reTerminal E1001 (Monochrome 800×480)</option>
+                                <option value="E1002">reTerminal E1002 (6-Color 800×480)</option>
+                                <option value="TRMNL">Official TRMNL (ESP32-C3 800×480)</option>
                             </select>
                             <p class="hint" style="color: var(--muted); font-size: 11px; margin-top: 4px;">Select the device that will display this layout.</p>
                         </div>
@@ -377,7 +374,7 @@ class LayoutManager {
             `;
             document.body.appendChild(modal);
 
-            // Bindevents
+            // Bind events
             document.getElementById("newLayoutClose").addEventListener("click", () => {
                 modal.classList.add("hidden");
             });
@@ -403,22 +400,11 @@ class LayoutManager {
         const existingCount = this.layouts.length;
         const defaultName = `Layout ${existingCount + 1}`;
         document.getElementById("newLayoutName").value = defaultName;
-        // Default to first available device or fallback
-        const defaultDevice = window.DEVICE_PROFILES ? Object.keys(window.DEVICE_PROFILES)[0] : "reterminal_e1001";
-        document.getElementById("newLayoutDeviceType").value = defaultDevice;
+        document.getElementById("newLayoutDeviceType").value = "E1001";
         document.getElementById("newLayoutModal").classList.remove("hidden");
     }
 
-    generateDeviceOptions() {
-        if (window.DEVICE_PROFILES) {
-            return Object.entries(window.DEVICE_PROFILES).map(([key, profile]) =>
-                `<option value="${key}">${profile.name}</option>`
-            ).join("");
-        }
-        return `<option value="reterminal_e1001">reTerminal E1001</option>`;
-    }
-
-    async createLayout(name, deviceModel = "reterminal_e1001") {
+    async createLayout(name, deviceType = "E1001") {
         if (typeof hasHaBackend !== "function" || !hasHaBackend()) return;
 
         // Generate ID from name - ALWAYS add timestamp to ensure uniqueness
@@ -432,14 +418,19 @@ class LayoutManager {
         // Always append timestamp for uniqueness
         const id = baseId + "_" + Date.now();
 
-        // Note: deviceModel is now passed directly from the select value
-
+        // Determine device model from device type
+        let deviceModel = "reterminal_e1001"; // Default
+        if (deviceType === "E1002") {
+            deviceModel = "reterminal_e1002";
+        } else if (deviceType === "TRMNL" || deviceType.toLowerCase() === "trmnl") {
+            deviceModel = "trmnl";
+        }
 
         try {
             const resp = await fetch(`${HA_API_BASE}/layouts`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, name, device_type: deviceModel, device_model: deviceModel })
+                body: JSON.stringify({ id, name, device_type: deviceType, device_model: deviceModel })
             });
 
             if (!resp.ok) {

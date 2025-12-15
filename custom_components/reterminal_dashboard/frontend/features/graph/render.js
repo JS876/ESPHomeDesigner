@@ -8,7 +8,7 @@
 
         el.style.boxSizing = "border-box";
         el.style.backgroundColor = "#ffffff";
-        // el.style.position = "relative"; // REMOVED: Breaks absolute positioning in editor
+        el.style.position = "relative";
         el.style.overflow = "hidden";
 
         if (borderEnabled) {

@@ -166,6 +166,7 @@ window.DEVICE_PROFILES = {
         name: "Waveshare PhotoPainter (6-Color)",
         displayModel: "7.30in-f",
         displayPlatform: "waveshare_epaper",
+        psram_mode: "octal",
         pins: {
             display: { cs: "GPIO9", dc: "GPIO8", reset: "GPIO12", busy: { number: "GPIO13", inverted: true } },
             i2c: { sda: "GPIO47", scl: "GPIO48" },

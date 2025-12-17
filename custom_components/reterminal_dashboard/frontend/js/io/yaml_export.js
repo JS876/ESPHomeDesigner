@@ -1032,7 +1032,7 @@ function generateSnippetLocally() {
             lines.push("      const auto COLOR_GREEN = Color(255, 128, 0);");  // Map to Orange -> Device shows Green
             lines.push("      const auto COLOR_BLUE = Color(255, 255, 0);");   // Map to Yellow -> Device shows Blue
             lines.push("      const auto COLOR_YELLOW = Color(0, 255, 0);");   // Map to Green -> Device shows Yellow
-            lines.push("      const auto COLOR_ORANGE = Color(0, 0, 255);");   // 6-Color display: Map Orange to Red
+            lines.push("      const auto COLOR_ORANGE = Color(0, 128, 255);"); // Manufacturer Code Key for Orange
             lines.push("      const auto COLOR_OFF = COLOR_WHITE;");
             lines.push("      const auto COLOR_ON = COLOR_BLACK;");
             lines.push("");

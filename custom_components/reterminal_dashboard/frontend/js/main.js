@@ -19,6 +19,8 @@ class App {
             console.log("[App] PageSettings created");
             this.keyboardHandler = new KeyboardHandler();
             console.log("[App] KeyboardHandler created");
+            this.llmPrompt = window.llmPrompt;
+            console.log("[App] LLMPrompt linked");
 
             // Initialize Layout Manager
             if (window.layoutManager) {
@@ -45,7 +47,20 @@ class App {
         this.propertiesPanel.init();
         this.deviceSettings.init();
         this.editorSettings.init();
+
+        // Load saved theme preference from localStorage
+        try {
+            const savedTheme = localStorage.getItem('reterminal-editor-theme');
+            if (savedTheme === 'light') {
+                AppState.settings.editor_light_mode = true;
+                this.editorSettings.applyEditorTheme(true);
+            }
+        } catch (e) {
+            console.log('Could not load theme preference:', e);
+        }
+
         this.pageSettings.init();
+        if (this.llmPrompt) this.llmPrompt.init();
 
         // Initialize Layout Manager
         if (this.layoutManager) {
@@ -159,6 +174,18 @@ class App {
         if (editorSettingsBtn) {
             editorSettingsBtn.addEventListener('click', () => {
                 this.editorSettings.open();
+            });
+        }
+
+        // AI Prompt
+        const aiPromptBtn = document.getElementById('aiPromptBtn');
+        if (aiPromptBtn) {
+            aiPromptBtn.addEventListener('click', () => {
+                if (this.llmPrompt) {
+                    this.llmPrompt.open();
+                } else {
+                    console.error("LLMPrompt instance not found.");
+                }
             });
         }
 

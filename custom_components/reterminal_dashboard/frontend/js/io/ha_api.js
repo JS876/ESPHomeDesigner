@@ -69,7 +69,7 @@ async function fetchEntityStates() {
     entityStatesFetchInProgress = true;
     try {
         console.log("[EntityStates] Fetching from:", `${HA_API_BASE}/entities`);
-        const resp = await fetch(`${HA_API_BASE}/entities?domains=sensor,binary_sensor,weather,switch,input_boolean,input_number,input_select,input_text,button,input_button`, {
+        const resp = await fetch(`${HA_API_BASE}/entities?domains=sensor,binary_sensor,weather,light,switch,fan,cover,climate,media_player,input_number,number,input_boolean,input_text,input_select,button,input_button,scene,script`, {
             headers: getHaHeaders()
         });
         if (!resp.ok) {
@@ -266,9 +266,10 @@ async function saveLayoutToBackend() {
     // Get device model - prefer settings (which user can change) over top-level
     const deviceModel = window.AppState.settings.device_model || window.AppState.deviceModel || "reterminal_e1001";
 
+    const payload = window.AppState.getPagesPayload();
+
     const layoutData = {
-        pages: window.AppState.pages,
-        ...window.AppState.settings,
+        ...payload,
         device_id: layoutId,
         name: window.AppState.deviceName || "Layout 1",
         device_model: deviceModel,

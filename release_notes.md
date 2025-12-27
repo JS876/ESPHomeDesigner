@@ -1,8 +1,42 @@
 # Release Notes
 
+## v0.8.2 - AI Assistant & Secure API
+
+**Release Date:** December 26, 2025
+
+### 🎉 New Features
+- **AI-Powered Dashboard Assistant**: A new AI-driven design assistant that can generate entire dashboards or individual widgets from simple text prompts (e.g., "Make a beautiful weather dashboard with large bold text").
+- **Multi-Provider AI Support**: Seamlessly switch between Google Gemini, OpenAI, and OpenRouter.
+- **Dynamic Model Discovery**: Real-time fetching and filtering of available models from AI providers with custom model filters.
+- **Secure Local-Only API Storage**: AI API keys are stored exclusively in your browser's `localStorage`. They are never included in exported JSON files or sent to the Home Assistant backend, ensuring your credentials stay private.
+- **Hyper-Strict AI Compliance**: Engineered system prompts with negative constraints and literal-text handling to ensure the AI follows your instructions perfectly.
+- **Bespoke Architect Design Rules**: The AI now follows professional design principles, using `rounded_rect` containers and visual hierarchy for premium-looking dashboards.
+- **WiFi Signal Strength Widget**: New drag-and-drop widget displaying WiFi signal strength using MDI icons. Shows dynamic icon based on signal level (Excellent ≥-50dB, Good ≥-60dB, Fair ≥-75dB, Weak ≥-100dB) with optional dBm value. Uses ESPHome's built-in `wifi_signal` sensor platform.
+- **On Device Sensors Category**: New widget category consolidating device-related widgets:
+  - **Battery Widget** (moved from Core Widgets)
+  - **WiFi Signal Widget** (moved from Core Widgets)
+  - **Temperature Widget (NEW)**: Displays on-device SHT4x temperature sensor or Home Assistant entity with dynamic thermometer icons (Cold/Normal/Hot).
+  - **Humidity Widget (NEW)**: Displays on-device SHT4x humidity sensor or Home Assistant entity with dynamic water-drop icons (Low/Normal/High).
+- **Live Sensor Preview**: Battery, WiFi, Temperature, and Humidity widgets now show actual sensor values in the canvas preview when configured with a Home Assistant entity.
+- **Quick Widget Search (Shift+Space)**: New command palette for rapidly adding widgets. Press Shift+Space to open a searchable list of all widgets with keyboard navigation (↑↓ to select, Enter to add, Escape to close). Dynamically discovers all widgets from the palette.
+- **Optional Diacritic Font Support**: Added support for extended Latin characters (ľ, š, č, ť, ž, etc.) via the `GF_Latin_Core` glyphset. This can be enabled per-device in the Device Settings to support international characters while keeping firmware size small for users who don't need them.
+- **Inverted Colors Support for Recipes**: Hardware recipes now support an `# Inverted: true` metadata comment to automatically swap black and white colors for e-paper displays with reversed color mapping.
+- **Manual Color Inversion Toggle**: Added a new "Inverted Colors" checkbox in the Device Settings modal, allowing users to manually override color mapping for e-paper displays that appear inverted on-device.
+- **Improved Hardware Recipe Parser**: The recipe parser now extracts more metadata, including the inverted flag, ensuring better "out-of-the-box" compatibility for new displays.
 
 
+### 🐛 Bug Fixes
+- **LCD YAML Generation**: Fixed critical issues where E-ink specific rendering code (dithering, inverted colors) was incorrectly applied to LCD devices, causing visual artifacts and black screens.
+- **Package Standardization**: Standardized YAML output for "untested" package-based devices. Now, imported hardware packages automatically have conflicting system keys (`esphome`, `wifi`, `api`, etc.) commented out, ensuring a clean "partial YAML" that pastes perfectly without duplicate header errors.
+- **Battery Widget Sensor Bug**: Fixed issue where the Battery Entity ID field was not generating the required Home Assistant sensor declaration, causing "Couldn't find ID" errors when compiling in ESPHome.
+- **Theme Persistence**: Fixed Light Mode not persisting after page refresh; the theme preference now correctly loads from localStorage on startup.
+- **Touchpad Gesture Behavior**: Improved canvas interaction for macOS trackpads. Two-finger scroll now pans the canvas, while pinch-to-zoom and Ctrl+scroll zoom in/out, matching standard design tools like draw.io.
+- **LVGL Slider & Light Support**: Fixed issue #87 where light entities could not be selected for sliders, buttons, and switches. Expanded the entity picker to include `light`, `fan`, `cover`, and other domains. Updated the slider to generate brightness control and buttons/switches to use `homeassistant.toggle` for seamless light interaction.
+- **M5Paper Color Inversion**: Fixed an issue where "Dark Mode" and "Light Mode" were inverted on M5Paper devices by correctly enabling the `inverted_colors` flag in the hardware profile.
+- **Icon Browser & Previews**: Fixed critical mismatch in the icon browser where the previewed icon did not match the file name (e.g., "account" showed a completely different icon). Also fixed rendering for extended Material Design Icons by correctly handling 5-digit hex codes.
+- **Orientation-Aware Rotation & Touch Calibration**: Fixed issue where devices with native portrait orientation (like M5Paper) ignored the "Orientation" setting in the generated YAML. The Designer now automatically calculates the correct `rotation` value and swaps touchscreen `calibration` coordinates based on whether the device is natively portrait or landscape.
 
+---
 
 ## v0.8.1 - Standalone Mode & LVGL Grid
 

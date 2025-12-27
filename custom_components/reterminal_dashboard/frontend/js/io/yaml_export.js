@@ -58,6 +58,73 @@ async function fetchHardwarePackage(url) {
 }
 
 /**
+ * Sanitizes imported package content by commenting out system-level configuration
+ * to ensure consistent partial-YAML output for all devices.
+ */
+function sanitizePackageContent(yamlContent) {
+    if (!yamlContent) return "";
+
+    const lines = yamlContent.split('\n');
+    const sanitizedLines = [];
+    const systemKeys = [
+        "esphome:", "esp32:", "wifi:", "api:", "ota:", "logger:",
+        "web_server:", "captive_portal:", "platformio_options:", "preferences:",
+        "substitutions:" // Often handled in main config
+    ];
+
+    // Hardware keys to definitely keep active
+    // (Everything else is treated neutrally, but system keys trigger commenting block)
+    const hardwareKeys = [
+        "display:", "i2c:", "spi:", "touchscreen:", "output:", "light:",
+        "binary_sensor:", "sensor:", "switch:", "font:", "image:",
+        "animation:", "graph:", "qr_code:", "time:", "deep_sleep:", "globals:"
+    ];
+
+    let insideSystemBlock = false;
+    let currentBlockIndent = 0;
+
+    for (let line of lines) {
+        // preserve empty lines
+        if (line.trim().length === 0) {
+            sanitizedLines.push(line);
+            continue;
+        }
+
+        const indentMatch = line.match(/^\s*/);
+        const indent = indentMatch ? indentMatch[0].length : 0;
+        const trimmed = line.trim();
+
+        // Check for new top-level key
+        const isTopLevel = indent === 0 && trimmed.endsWith(':');
+
+        if (isTopLevel) {
+            // Is this a system key?
+            const isSystem = systemKeys.some(k => trimmed.startsWith(k));
+
+            if (isSystem) {
+                insideSystemBlock = true;
+                currentBlockIndent = 0;
+                sanitizedLines.push("# " + line + " # (Auto-commented by Designer)");
+            } else {
+                insideSystemBlock = false;
+                sanitizedLines.push(line);
+            }
+        } else {
+            // Indented line
+            if (insideSystemBlock) {
+                // Check if this line de-indents back to 0 (shouldn't happen directly without isTopLevel check above, but safe to check)
+                // Actually, standard YAML structure implies indentation means belonging to parent.
+                sanitizedLines.push("# " + line);
+            } else {
+                sanitizedLines.push(line);
+            }
+        }
+    }
+
+    return sanitizedLines.join('\n');
+}
+
+/**
  * Main function to generate the ESPHome YAML snippet.
  * NOW ASYNC to support fetching external hardware packages.
  */
@@ -97,6 +164,13 @@ async function generateSnippetLocally() {
 
     // Determine display ID based on device type (LCD vs e-paper)
     const displayId = profile.features?.lcd ? "my_display" : "epaper_display";
+
+    // Detect device screen technology
+    const isEpaper = !!profile.features?.epaper;
+    const isLcd = !!profile.features?.lcd || !isEpaper; // Default to LCD if not epaper? No, default to E-paper for legacy?
+    // Actually, legacy E-paper devices usually have `epaper: true`.
+    // Let's rely on `epaper: true` for dithering.
+    // If not epaper, assumed LCD/OLED logic.
 
     // Collect quote/rss widgets early for globals and interval generation
     const quoteRssWidgetsEarly = [];
@@ -141,6 +215,10 @@ async function generateSnippetLocally() {
                 if (t === "touch_area") {
                     touchAreaWidgets.push(w);
                 }
+                if (t === "wifi_signal") {
+                    // Track for sensor generation (only need to generate once)
+                }
+
                 if (t === "image") {
                     const path = (w.props?.path || "").trim();
                     if (path) {
@@ -269,12 +347,32 @@ async function generateSnippetLocally() {
         lines.push("");
     }
 
+    // =========================================================================
+    // Generate actual on_boot section for LCD devices
+    // This fixes Issue #80: LCD displays showing black screen until first refresh
+    // =========================================================================
+    if (isLcd && !profile.isPackageBased) {
+        lines.push("esphome:");
+        lines.push("  on_boot:");
+        lines.push("    priority: 600");
+        lines.push("    then:");
+        lines.push("      - delay: 2s  # Wait for Home Assistant API connection");
+        lines.push("      - script.execute: manage_run_and_sleep");
+        lines.push("");
+    }
+
     // --- PACKAGE CONTENT ---
     if (packageContent) {
+        // Sanitize the content to ensure partial-YAML compliance
+        const sanitized = sanitizePackageContent(packageContent);
+
         lines.push("# ------------------------------------");
         lines.push("# Hardware Recipe / Package Content");
         lines.push("# ------------------------------------");
-        lines.push(packageContent);
+        lines.push("# Note: System-level configuration (WiFi, API, etc.) has been");
+        lines.push("# automatically commented out to prevent conflicts.");
+        lines.push("# ------------------------------------");
+        lines.push(sanitized);
         lines.push("");
     }
 
@@ -337,7 +435,9 @@ async function generateSnippetLocally() {
     lines.push("  - id: page_refresh_default_s");
     lines.push("    type: int");
     lines.push("    restore_value: true");
-    lines.push(`    initial_value: '${payload.deep_sleep_interval || 600}'`);
+    // LCD devices should refresh quickly; e-paper/battery devices can use longer intervals
+    const defaultRefreshInterval = isLcd ? 60 : (payload.deep_sleep_interval || 600);
+    lines.push(`    initial_value: '${defaultRefreshInterval}'`);
 
     lines.push("  - id: page_refresh_current_s");
     lines.push("    type: int");
@@ -505,6 +605,68 @@ async function generateSnippetLocally() {
                     widgetSensorLines.push(`    internal: true`);
                 }
             }
+
+            // Also collect battery_icon widget entities
+            if (t === "battery_icon" || t === "battery") {
+                const entity = w.entity_id || "";
+                const isLocal = !!props.is_local_sensor;
+
+                if (entity && !isLocal && !processedSensorIds.has(entity)) {
+                    processedSensorIds.add(entity);
+                    const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_");
+                    widgetSensorLines.push(`  - platform: homeassistant`);
+                    widgetSensorLines.push(`    id: ${entityId}`);
+                    widgetSensorLines.push(`    entity_id: ${entity}`);
+                    widgetSensorLines.push(`    internal: true`);
+                }
+            }
+
+            // Track wifi_signal widgets
+            if (t === "wifi_signal") {
+                const entity = w.entity_id || "";
+                const isLocal = props.is_local_sensor !== false;
+
+                // If using HA entity and not local, add HA sensor
+                if (entity && !isLocal && !processedSensorIds.has(entity)) {
+                    processedSensorIds.add(entity);
+                    const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_");
+                    widgetSensorLines.push(`  - platform: homeassistant`);
+                    widgetSensorLines.push(`    id: ${entityId}`);
+                    widgetSensorLines.push(`    entity_id: ${entity}`);
+                    widgetSensorLines.push(`    internal: true`);
+                }
+            }
+
+            // Track ondevice_temperature widgets
+            if (t === "ondevice_temperature") {
+                const entity = w.entity_id || "";
+                const isLocal = props.is_local_sensor !== false;
+
+                if (entity && !isLocal && !processedSensorIds.has(entity)) {
+                    processedSensorIds.add(entity);
+                    const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_");
+                    widgetSensorLines.push(`  - platform: homeassistant`);
+                    widgetSensorLines.push(`    id: ${entityId}`);
+                    widgetSensorLines.push(`    entity_id: ${entity}`);
+                    widgetSensorLines.push(`    internal: true`);
+                }
+            }
+
+            // Track ondevice_humidity widgets
+            if (t === "ondevice_humidity") {
+                const entity = w.entity_id || "";
+                const isLocal = props.is_local_sensor !== false;
+
+                if (entity && !isLocal && !processedSensorIds.has(entity)) {
+                    processedSensorIds.add(entity);
+                    const entityId = entity.replace(/[^a-zA-Z0-9_]/g, "_");
+                    widgetSensorLines.push(`  - platform: homeassistant`);
+                    widgetSensorLines.push(`    id: ${entityId}`);
+                    widgetSensorLines.push(`    entity_id: ${entity}`);
+                    widgetSensorLines.push(`    internal: true`);
+                }
+            }
+
         });
     });
 
@@ -520,6 +682,76 @@ async function generateSnippetLocally() {
             widgetSensorLines.push(`    entity_id: sensor.weather_forecast_day_${day}_low`);
             widgetSensorLines.push(`    internal: true`);
         }
+    }
+
+    // Add wifi_signal sensor if any wifi_signal widgets exist
+    let hasWifiSignalWidget = false;
+    for (const page of pagesLocal) {
+        if (!page.widgets) continue;
+        for (const w of page.widgets) {
+            if ((w.type || "").toLowerCase() === "wifi_signal") {
+                hasWifiSignalWidget = true;
+                break;
+            }
+        }
+        if (hasWifiSignalWidget) break;
+    }
+    if (hasWifiSignalWidget) {
+        // Only generate local wifi_signal sensor if at least one widget uses it
+        let needsLocalWifiSensor = false;
+        for (const page of pagesLocal) {
+            if (!page.widgets) continue;
+            for (const w of page.widgets) {
+                if ((w.type || "").toLowerCase() === "wifi_signal") {
+                    const p = w.props || {};
+                    if (p.is_local_sensor !== false) {
+                        needsLocalWifiSensor = true;
+                        break;
+                    }
+                }
+            }
+            if (needsLocalWifiSensor) break;
+        }
+        if (needsLocalWifiSensor) {
+            widgetSensorLines.push(`  # WiFi Signal Strength Sensor`);
+            widgetSensorLines.push(`  - platform: wifi_signal`);
+            widgetSensorLines.push(`    name: "WiFi Signal"`);
+            widgetSensorLines.push(`    id: wifi_signal_dbm`);
+            widgetSensorLines.push(`    update_interval: 60s`);
+        }
+    }
+
+    // Add SHT4x sensors if any ondevice_temperature or ondevice_humidity widgets use local sensor
+    let needsLocalTempSensor = false;
+    let needsLocalHumiditySensor = false;
+    for (const page of pagesLocal) {
+        if (!page.widgets) continue;
+        for (const w of page.widgets) {
+            const t = (w.type || "").toLowerCase();
+            const p = w.props || {};
+            if (t === "ondevice_temperature" && p.is_local_sensor !== false) {
+                needsLocalTempSensor = true;
+            }
+            if (t === "ondevice_humidity" && p.is_local_sensor !== false) {
+                needsLocalHumiditySensor = true;
+            }
+        }
+        if (needsLocalTempSensor && needsLocalHumiditySensor) break;
+    }
+    if (needsLocalTempSensor || needsLocalHumiditySensor) {
+        widgetSensorLines.push(`  # SHT4x Temperature/Humidity Sensor`);
+        widgetSensorLines.push(`  - platform: sht4x`);
+        if (needsLocalTempSensor) {
+            widgetSensorLines.push(`    temperature:`);
+            widgetSensorLines.push(`      name: "On-Device Temperature"`);
+            widgetSensorLines.push(`      id: sht4x_temperature`);
+        }
+        if (needsLocalHumiditySensor) {
+            widgetSensorLines.push(`    humidity:`);
+            widgetSensorLines.push(`      name: "On-Device Humidity"`);
+            widgetSensorLines.push(`      id: sht4x_humidity`);
+        }
+        widgetSensorLines.push(`    update_interval: 60s`);
     }
 
     // Call generic sensor generator
@@ -1003,11 +1235,38 @@ async function generateSnippetLocally() {
                     const codes = ["F0079", "F007A", "F007B", "F007C", "F007D", "F007E", "F007F",
                         "F0080", "F0081", "F0082", "F0083"];
                     codes.forEach(c => addCode(c, size));
+                } else if (t === "wifi_signal") {
+                    // WiFi signal strength icons
+                    const size = p.size || 24;
+                    const codes = ["F092B", "F091F", "F0922", "F0925", "F0928"];
+                    // F092B = wifi-strength-alert-outline
+                    // F091F = wifi-strength-1
+                    // F0922 = wifi-strength-2
+                    // F0925 = wifi-strength-3
+                    // F0928 = wifi-strength-4
+                    codes.forEach(c => addCode(c, size));
                 } else if (t === "touch_area") {
+
                     // touch_area uses icon_size (default 40)
                     const size = p.icon_size || 40;
                     if (p.icon) addCode(p.icon, size);
                     if (p.icon_pressed) addCode(p.icon_pressed, size);
+                } else if (t === "ondevice_temperature") {
+                    // Thermometer icons (cold, normal, hot)
+                    const size = p.size || 32;
+                    const codes = ["F0E4C", "F050F", "F10C2"];
+                    // F0E4C = thermometer-low
+                    // F050F = thermometer
+                    // F10C2 = thermometer-high
+                    codes.forEach(c => addCode(c, size));
+                } else if (t === "ondevice_humidity") {
+                    // Water/humidity icons (low, normal, high)
+                    const size = p.size || 32;
+                    const codes = ["F0E7A", "F058E", "F058C"];
+                    // F0E7A = water-outline
+                    // F058E = water-percent
+                    // F058C = water
+                    codes.forEach(c => addCode(c, size));
                 }
             });
         }
@@ -1091,9 +1350,18 @@ async function generateSnippetLocally() {
                 }
                 fontLines.push(`    id: ${id}`);
                 fontLines.push(`    size: ${size}`);
-                // Add extended glyphs to ensure units and standard symbols work
-                // Note: We inject raw string list directly, assuming ESPHome parser handles it
-                fontLines.push(`    glyphs: [${EXTENDED_GLYPHS}]`);
+
+                // Check if extended Latin characters (diacritics) are enabled
+                // When enabled, use glyphsets for comprehensive diacritic support (ľ, š, č, ť, ž, etc.)
+                // This increases firmware size but provides full character coverage
+                if (payload.extended_latin_glyphs) {
+                    fontLines.push(`    glyphsets:`);
+                    fontLines.push(`      - GF_Latin_Core`);
+                } else {
+                    // Default: Add extended glyphs to ensure units and standard symbols work
+                    // Note: We inject raw string list directly, assuming ESPHome parser handles it
+                    fontLines.push(`    glyphs: [${EXTENDED_GLYPHS}]`);
+                }
             }
         }
         return id;
@@ -1118,11 +1386,12 @@ async function generateSnippetLocally() {
 
     // SKIP display hardware generation for package-based devices (it's in embedded YAML)
     if (!profile.isPackageBased) {
+        const orientation = payload.orientation || 'landscape';
         if (useLVGL) {
             const profileCopy = JSON.parse(JSON.stringify(profile));
-            lines.push(...generateDisplaySection(profileCopy));
+            lines.push(...generateDisplaySection(profileCopy, orientation));
         } else {
-            lines.push(...generateDisplaySection(profile));
+            lines.push(...generateDisplaySection(profile, orientation));
         }
     }
 
@@ -1224,7 +1493,12 @@ async function generateSnippetLocally() {
             const RECT_Y_OFFSET = 0;
             const TEXT_Y_OFFSET = 0;
 
-            if (profile.features?.inverted_colors) {
+            // Check if colors should be inverted:
+            // 1. From profile.features.inverted_colors (set in device definition or recipe)
+            // 2. From payload.inverted_colors (user override via Device Settings checkbox)
+            const useInvertedColors = profile.features?.inverted_colors || payload.inverted_colors;
+
+            if (useInvertedColors) {
                 lines.push("      const auto COLOR_WHITE = Color(0, 0, 0); // Inverted for e-ink");
                 lines.push("      const auto COLOR_BLACK = Color(255, 255, 255); // Inverted for e-ink");
             } else {
@@ -1284,14 +1558,20 @@ async function generateSnippetLocally() {
             if (needsDither) {
                 // Dither Helper - draws a checkerboard pattern by erashing alternating pixels
                 lines.push("      auto apply_grey_dither_mask = [&](int x, int y, int w, int h) {");
-                lines.push("          for (int i = 0; i < w; i++) {");
-                lines.push("              for (int j = 0; j < h; j++) {");
-                lines.push("                  // Subtractive dither: Punch holes on alternating pixels");
-                lines.push("                  if ((x + i + y + j) % 2 != 0) {");
-                lines.push("                      it.draw_pixel_at(x + i, y + j, color_off);");
-                lines.push("                  }");
-                lines.push("              }");
-                lines.push("          }");
+                lines.push("          // Dithering only for E-paper devices");
+                lines.push("          // LCDs use standard RGB/Gray rendering");
+                if (isEpaper) {
+                    lines.push("          for (int i = 0; i < w; i++) {");
+                    lines.push("              for (int j = 0; j < h; j++) {");
+                    lines.push("                  // Subtractive dither: Punch holes on alternating pixels");
+                    lines.push("                  if ((x + i + y + j) % 2 != 0) {");
+                    lines.push("                      it.draw_pixel_at(x + i, y + j, color_off);");
+                    lines.push("                  }");
+                    lines.push("              }");
+                    lines.push("          }");
+                } else {
+                    lines.push("          // No-op for LCD");
+                }
                 lines.push("      };");
                 lines.push("");
             }
@@ -1370,14 +1650,33 @@ async function generateSnippetLocally() {
 
                 // Clear screen with appropriate color for this page
                 lines.push(`        // Clear screen for this page`);
-                if (effectiveDarkMode) {
-                    lines.push(`        it.fill(COLOR_BLACK);`);
-                    lines.push(`        color_off = COLOR_BLACK;`);
-                    lines.push(`        color_on = COLOR_WHITE;`);
+
+                if (isEpaper) {
+                    // E-INK LOGIC: "White" is the base (color_off), "Black" is ink (color_on). 
+                    // Dark mode inverts this conceptually or physically.
+                    if (effectiveDarkMode) {
+                        lines.push(`        it.fill(COLOR_BLACK);`);
+                        lines.push(`        color_off = COLOR_BLACK;`);
+                        lines.push(`        color_on = COLOR_WHITE;`);
+                    } else {
+                        lines.push(`        it.fill(COLOR_WHITE);`);
+                        lines.push(`        color_off = COLOR_WHITE;`);
+                        lines.push(`        color_on = COLOR_BLACK;`);
+                    }
                 } else {
-                    lines.push(`        it.fill(COLOR_WHITE);`);
-                    lines.push(`        color_off = COLOR_WHITE;`);
-                    lines.push(`        color_on = COLOR_BLACK;`);
+                    // LCD/OLED LOGIC: Standard RGB.
+                    // Light Mode = White Background, Black Text
+                    // Dark Mode = Black Background, White Text
+                    // NO concept of "color_on/color_off" for dithering, but we define them for compatibility
+                    if (effectiveDarkMode) {
+                        lines.push(`        it.fill(COLOR_BLACK);`);
+                        lines.push(`        color_off = COLOR_BLACK;`); // Background
+                        lines.push(`        color_on = COLOR_WHITE;`);  // Foreground/Text
+                    } else {
+                        lines.push(`        it.fill(COLOR_WHITE);`);
+                        lines.push(`        color_off = COLOR_WHITE;`); // Background
+                        lines.push(`        color_on = COLOR_BLACK;`);  // Foreground/Text
+                    }
                 }
 
                 if (page.widgets) {
@@ -1792,7 +2091,152 @@ async function generateSnippetLocally() {
                             }
                             lines.push(`        }`);
 
+                        } else if (t === "wifi_signal") {
+                            const entityId = (w.entity_id || "").trim();
+                            const size = parseInt(p.size || 24, 10);
+                            const fontSize = parseInt(p.font_size || 12, 10);
+                            const colorProp = p.color || "black";
+                            const color = getColorConst(colorProp);
+                            const showDbm = p.show_dbm !== false;
+                            const isLocal = p.is_local_sensor !== false;
+                            const fontRef = addFont("Material Design Icons", 400, size);
+                            const dbmFontRef = addFont("Roboto", 400, fontSize);
+
+                            // Determine sensor ID
+                            let sensorId;
+                            if (isLocal) {
+                                sensorId = "wifi_signal_dbm";
+                            } else {
+                                sensorId = entityId ? entityId.replace(/^sensor\./, "").replace(/\./g, "_").replace(/-/g, "_") : "wifi_signal_dbm";
+                            }
+
+                            lines.push(`        // widget:wifi_signal id:${w.id} type:wifi_signal x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity:${entityId || "wifi_signal_dbm"} size:${size} font_size:${fontSize} color:${colorProp} show_dbm:${showDbm} local:${isLocal} ${getCondProps(w)}`);
+                            lines.push(`        {`);
+                            lines.push(`          const char* wifi_icon = "\\U000F092B"; // Default: wifi-strength-alert-outline`);
+                            lines.push(`          if (id(${sensorId}).has_state()) {`);
+                            lines.push(`            float signal = id(${sensorId}).state;`);
+                            lines.push(`            if (std::isnan(signal)) signal = -100;`);
+                            lines.push(`            if (signal >= -50) wifi_icon = "\\U000F0928";      // wifi-strength-4 (Excellent)`);
+                            lines.push(`            else if (signal >= -60) wifi_icon = "\\U000F0925"; // wifi-strength-3 (Good)`);
+                            lines.push(`            else if (signal >= -75) wifi_icon = "\\U000F0922"; // wifi-strength-2 (Fair)`);
+                            lines.push(`            else if (signal >= -100) wifi_icon = "\\U000F091F"; // wifi-strength-1 (Weak)`);
+                            lines.push(`            else wifi_icon = "\\U000F092B";                    // wifi-strength-alert-outline`);
+                            lines.push(`          }`);
+                            lines.push(`          it.printf(${w.x}, ${w.y}, id(${fontRef}), ${color}, "%s", wifi_icon);`);
+                            if (showDbm) {
+                                lines.push(`          if (id(${sensorId}).has_state()) {`);
+                                lines.push(`            it.printf(${w.x} + ${size}/2, ${w.y} + ${size} + 2, id(${dbmFontRef}), ${color}, TextAlign::TOP_CENTER, "%.0fdB", id(${sensorId}).state);`);
+                                lines.push(`          }`);
+                            }
+                            // Apply grey dithering if color is gray
+                            if (colorProp.toLowerCase() === "gray") {
+                                lines.push(`          apply_grey_dither_mask(${w.x}, ${w.y}, ${w.width}, ${w.height});`);
+                            }
+                            lines.push(`        }`);
+
+
+                        } else if (t === "ondevice_temperature") {
+                            const entityId = (w.entity_id || "").trim();
+                            const iconSize = parseInt(p.size || 32, 10);
+                            const fontSize = parseInt(p.font_size || 16, 10);
+                            const labelFontSize = parseInt(p.label_font_size || 10, 10);
+                            const colorProp = p.color || "black";
+                            const color = getColorConst(colorProp);
+                            const unit = p.unit || "°C";
+                            const showLabel = p.show_label !== false;
+                            const precision = p.precision ?? 1;
+                            const isLocal = p.is_local_sensor !== false;
+                            const iconFontRef = addFont("Material Design Icons", 400, iconSize);
+                            const valueFontRef = addFont("Roboto", 500, fontSize);
+                            const labelFontRef = addFont("Roboto", 400, labelFontSize);
+
+                            // Determine sensor ID
+                            let sensorId;
+                            if (isLocal) {
+                                sensorId = "sht4x_temperature";
+                            } else {
+                                sensorId = entityId ? entityId.replace(/^sensor\\./, "").replace(/\\./g, "_").replace(/-/g, "_") : "sht4x_temperature";
+                            }
+
+                            lines.push(`        // widget:ondevice_temperature id:${w.id} x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity:${entityId || "sht4x_temperature"} icon_size:${iconSize} font_size:${fontSize} color:${colorProp} local:${isLocal} ${getCondProps(w)}`);
+                            lines.push(`        {`);
+                            lines.push(`          const char* temp_icon = "\\U000F050F"; // Default: thermometer`);
+                            lines.push(`          float temp_val = 22.5;`);
+                            lines.push(`          if (id(${sensorId}).has_state()) {`);
+                            lines.push(`            temp_val = id(${sensorId}).state;`);
+                            lines.push(`            if (temp_val <= 10) temp_icon = "\\\\U000F0E4C";      // thermometer-low`);
+                            lines.push(`            else if (temp_val > 25) temp_icon = "\\U000F10C2"; // thermometer-high`);
+                            lines.push(`          }`);
+                            // Icon centered at top
+                            lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y}, id(${iconFontRef}), ${color}, TextAlign::TOP_CENTER, "%s", temp_icon);`);
+                            // Value below icon
+                            lines.push(`          if (id(${sensorId}).has_state()) {`);
+                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "%.${precision}f${unit}", id(${sensorId}).state);`);
+                            lines.push(`          } else {`);
+                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
+                            lines.push(`          }`);
+                            // Label below value
+                            if (showLabel) {
+                                lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + fontSize + 4}, id(${labelFontRef}), ${color}, TextAlign::TOP_CENTER, "Temperature");`);
+                            }
+                            // Apply grey dithering if color is gray
+                            if (colorProp.toLowerCase() === "gray") {
+                                lines.push(`          apply_grey_dither_mask(${w.x}, ${w.y}, ${w.width}, ${w.height});`);
+                            }
+                            lines.push(`        }`);
+
+                        } else if (t === "ondevice_humidity") {
+                            const entityId = (w.entity_id || "").trim();
+                            const iconSize = parseInt(p.size || 32, 10);
+                            const fontSize = parseInt(p.font_size || 16, 10);
+                            const labelFontSize = parseInt(p.label_font_size || 10, 10);
+                            const colorProp = p.color || "black";
+                            const color = getColorConst(colorProp);
+                            const unit = p.unit || "%";
+                            const showLabel = p.show_label !== false;
+                            const precision = p.precision ?? 0;
+                            const isLocal = p.is_local_sensor !== false;
+                            const iconFontRef = addFont("Material Design Icons", 400, iconSize);
+                            const valueFontRef = addFont("Roboto", 500, fontSize);
+                            const labelFontRef = addFont("Roboto", 400, labelFontSize);
+
+                            // Determine sensor ID
+                            let sensorId;
+                            if (isLocal) {
+                                sensorId = "sht4x_humidity";
+                            } else {
+                                sensorId = entityId ? entityId.replace(/^sensor\\./, "").replace(/\\./g, "_").replace(/-/g, "_") : "sht4x_humidity";
+                            }
+
+                            lines.push(`        // widget:ondevice_humidity id:${w.id} x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity:${entityId || "sht4x_humidity"} icon_size:${iconSize} font_size:${fontSize} color:${colorProp} local:${isLocal} ${getCondProps(w)}`);
+                            lines.push(`        {`);
+                            lines.push(`          const char* hum_icon = "\\U000F058E"; // Default: water-percent`);
+                            lines.push(`          float hum_val = 45;`);
+                            lines.push(`          if (id(${sensorId}).has_state()) {`);
+                            lines.push(`            hum_val = id(${sensorId}).state;`);
+                            lines.push(`            if (hum_val <= 30) hum_icon = "\\U000F0E7A";       // water-outline`);
+                            lines.push(`            else if (hum_val > 60) hum_icon = "\\U000F058C"; // water`);
+                            lines.push(`          }`);
+                            // Icon centered at top
+                            lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y}, id(${iconFontRef}), ${color}, TextAlign::TOP_CENTER, "%s", hum_icon);`);
+                            // Value below icon
+                            lines.push(`          if (id(${sensorId}).has_state()) {`);
+                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "%.${precision}f${unit}", id(${sensorId}).state);`);
+                            lines.push(`          } else {`);
+                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
+                            lines.push(`          }`);
+                            // Label below value
+                            if (showLabel) {
+                                lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + fontSize + 4}, id(${labelFontRef}), ${color}, TextAlign::TOP_CENTER, "Humidity");`);
+                            }
+                            // Apply grey dithering if color is gray
+                            if (colorProp.toLowerCase() === "gray") {
+                                lines.push(`          apply_grey_dither_mask(${w.x}, ${w.y}, ${w.width}, ${w.height});`);
+                            }
+                            lines.push(`        }`);
+
                         } else if (t === "weather_icon") {
+
                             const entityId = (w.entity_id || "").trim();
                             const size = parseInt(p.size || 48, 10);
                             const colorProp = p.color || "black";
@@ -2134,7 +2578,9 @@ async function generateSnippetLocally() {
                                 }
                             }
                             if (colorProp.toLowerCase() === "gray" || colorProp.toLowerCase() === "grey") {
-                                lines.push(`        apply_grey_dither_mask(${w.x}, ${w.y}, ${w.width}, ${w.height});`);
+                                if (isEpaper) {
+                                    lines.push(`        apply_grey_dither_mask(${w.x}, ${w.y + RECT_Y_OFFSET}, ${w.width}, ${w.height});`);
+                                }
                             }
                             lines.push(`        }`);
 
@@ -2311,7 +2757,10 @@ async function generateSnippetLocally() {
                                 if (isGray) {
                                     // circle dither
                                     const circleY = w.y + RECT_Y_OFFSET;
-                                    lines.push(`        it.filled_circle(${cx}, ${cy}, ${r}, ${color}); apply_grey_dither_mask(${w.x}, ${circleY}, ${w.width}, ${w.height});`);
+                                    lines.push(`        it.filled_circle(${cx}, ${cy}, ${r}, ${color});`);
+                                    if (isEpaper) {
+                                        lines.push(`        apply_grey_dither_mask(${w.x}, ${circleY}, ${w.width}, ${w.height});`);
+                                    }
                                 } else {
                                     lines.push(`        it.filled_circle(${cx}, ${cy}, ${r}, ${color});`);
                                 }
@@ -2321,7 +2770,9 @@ async function generateSnippetLocally() {
                                 lines.push(`        }`);
                             }
                             if (borderColorProp.toLowerCase() === "gray" && !fill) {
-                                lines.push(`        apply_grey_dither_mask(${w.x}, ${w.y + RECT_Y_OFFSET}, ${w.width}, ${w.height});`);
+                                if (isEpaper) {
+                                    lines.push(`        apply_grey_dither_mask(${w.x}, ${w.y + RECT_Y_OFFSET}, ${w.width}, ${w.height});`);
+                                }
                             }
 
                         } else if (t === "datetime") {
@@ -2357,11 +2808,13 @@ async function generateSnippetLocally() {
                                 lines.push(`          it.strftime(${xPos}, ${w.y}, id(${dateFontId}), ${color}, ${espAlign}, "%A %d %B", now);`);
                             } else {
                                 lines.push(`          it.strftime(${xPos}, ${w.y}, id(${timeFontId}), ${color}, ${espAlign}, "%H:%M", now);`);
-                                lines.push(`          it.strftime(${xPos}, ${w.y} + ${timeSize} + 2, id(${dateFontId}), ${color}, ${espAlign}, "%d.%m.%Y", now);`);
+                                lines.push(`          it.strftime(${xPos}, ${w.y} + ${timeSize} + 2, id(${dateFontId}), ${color}, ${espAlign}, "%a, %b %d", now);`);
                             }
                             lines.push(`        }`);
                             if (colorProp.toLowerCase() === "gray" || colorProp.toLowerCase() === "grey") {
-                                lines.push(`        apply_grey_dither_mask(${w.x}, ${w.y + RECT_Y_OFFSET}, ${w.width}, ${w.height});`);
+                                if (isEpaper) {
+                                    lines.push(`        apply_grey_dither_mask(${w.x}, ${w.y + RECT_Y_OFFSET}, ${w.width}, ${w.height});`);
+                                }
                             }
 
                         } else if (t === "image" || t === "online_image" || t === "puppet") {

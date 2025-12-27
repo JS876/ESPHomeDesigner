@@ -151,6 +151,52 @@ class WidgetFactory {
                 };
                 break;
 
+            case "wifi_signal":
+                widget.width = 60;
+                widget.height = 60;
+                widget.props = {
+                    size: 24,
+                    font_size: 12,  // Font size for the dBm label
+                    color: defaultColor,
+                    show_dbm: true,
+                    fit_icon_to_frame: false,
+                    is_local_sensor: true  // Use built-in wifi_signal by default
+                };
+                break;
+
+            case "ondevice_temperature":
+                widget.width = 80;
+                widget.height = 90;
+                widget.props = {
+                    size: 32,  // Icon size
+                    font_size: 16,  // Value font size
+                    label_font_size: 10,
+                    color: defaultColor,
+                    unit: "°C",
+                    show_label: true,
+                    precision: 1,
+                    fit_icon_to_frame: false,
+                    is_local_sensor: true  // Use built-in SHT4x by default
+                };
+                break;
+
+            case "ondevice_humidity":
+                widget.width = 80;
+                widget.height = 90;
+                widget.props = {
+                    size: 32,  // Icon size
+                    font_size: 16,  // Value font size
+                    label_font_size: 10,
+                    color: defaultColor,
+                    unit: "%",
+                    show_label: true,
+                    precision: 0,
+                    fit_icon_to_frame: false,
+                    is_local_sensor: true  // Use built-in SHT4x by default
+                };
+                break;
+
+
             case "weather_icon":
                 widget.width = 48;
                 widget.height = 48;
@@ -418,7 +464,8 @@ class WidgetFactory {
                     color: defaultColor,
                     bg_color: "gray",
                     border_width: 2,
-                    mode: "NORMAL"
+                    mode: "NORMAL",
+                    vertical: false
                 };
                 break;
             case "calendar":

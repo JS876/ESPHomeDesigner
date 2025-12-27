@@ -407,6 +407,8 @@ function transpileToLVGL(w, profile) {
 
         case "lvgl_slider":
             let sliderValue = p.value || 30;
+            // Note: LVGL determines slider orientation based on dimensions
+            // If height > width, the slider is rendered vertically
             const sliderObj = {
                 slider: {
                     ...common,
@@ -429,17 +431,78 @@ function transpileToLVGL(w, profile) {
 
             // Add HA interaction if entity is set and device has touch
             if (w.entity_id && hasTouch) {
-                sliderObj.slider.on_value = [
-                    {
+                const safeEntity = w.entity_id.trim();
+                let serviceCall;
+
+                if (safeEntity.startsWith("light.")) {
+                    // Light brightness control (0-100 → 0-255 or use brightness_pct)
+                    serviceCall = {
+                        "homeassistant.service": {
+                            service: "light.turn_on",
+                            data: {
+                                entity_id: safeEntity,
+                                brightness_pct: "!lambda 'return x;'"
+                            }
+                        }
+                    };
+                } else if (safeEntity.startsWith("fan.")) {
+                    // Fan percentage control
+                    serviceCall = {
+                        "homeassistant.service": {
+                            service: "fan.set_percentage",
+                            data: {
+                                entity_id: safeEntity,
+                                percentage: "!lambda 'return x;'"
+                            }
+                        }
+                    };
+                } else if (safeEntity.startsWith("cover.")) {
+                    // Cover position control
+                    serviceCall = {
+                        "homeassistant.service": {
+                            service: "cover.set_cover_position",
+                            data: {
+                                entity_id: safeEntity,
+                                position: "!lambda 'return x;'"
+                            }
+                        }
+                    };
+                } else if (safeEntity.startsWith("media_player.")) {
+                    // Media player volume (0-100 → 0.0-1.0)
+                    serviceCall = {
+                        "homeassistant.service": {
+                            service: "media_player.volume_set",
+                            data: {
+                                entity_id: safeEntity,
+                                volume_level: "!lambda 'return x / 100.0;'"
+                            }
+                        }
+                    };
+                } else if (safeEntity.startsWith("climate.")) {
+                    // Climate temperature control
+                    serviceCall = {
+                        "homeassistant.service": {
+                            service: "climate.set_temperature",
+                            data: {
+                                entity_id: safeEntity,
+                                temperature: "!lambda 'return x;'"
+                            }
+                        }
+                    };
+                } else {
+                    // Default: input_number, number.* entities
+                    serviceCall = {
                         "homeassistant.service": {
                             service: "number.set_value",
                             data: {
-                                entity_id: w.entity_id,
+                                entity_id: safeEntity,
                                 value: "!lambda 'return x;'"
                             }
                         }
-                    }
-                ];
+                    };
+                }
+
+                sliderObj.slider.on_value = [serviceCall];
             }
 
             return sliderObj;
@@ -676,7 +739,7 @@ function transpileToLVGL(w, profile) {
                 checkboxObj.checkbox.on_value = [
                     {
                         "homeassistant.service": {
-                            service: "input_boolean.toggle",
+                            service: "homeassistant.toggle",
                             data: { entity_id: w.entity_id }
                         }
                     }

@@ -130,6 +130,10 @@ function parseHardwareRecipeClientSide(yaml, filename) {
     const shapeMatch = yaml.match(/#\s*Shape:\s*(rect|round)/i);
     if (shapeMatch) shape = shapeMatch[1].toLowerCase();
 
+    // Detect inverted colors from comment (# Inverted: true)
+    const invertedMatch = yaml.match(/#\s*Inverted:\s*(true|yes|1)/i);
+    const isInverted = !!invertedMatch;
+
     return {
         id: id,
         name: name + " (Local)",
@@ -141,7 +145,8 @@ function parseHardwareRecipeClientSide(yaml, filename) {
         features: {
             psram: yaml.includes("psram:"),
             lcd: !yaml.includes("waveshare_epaper") && !yaml.includes("epaper_spi"),
-            epaper: yaml.includes("waveshare_epaper") || yaml.includes("epaper_spi")
+            epaper: yaml.includes("waveshare_epaper") || yaml.includes("epaper_spi"),
+            inverted_colors: isInverted
         }
     };
 }

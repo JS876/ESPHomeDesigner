@@ -2,7 +2,7 @@
 // HARDWARE SECTION GENERATORS
 // ============================================================================
 
-function generateTouchscreenSection(profile, displayId = "my_display") {
+function generateTouchscreenSection(profile, displayId = "my_display", displayRotation = 0) {
     if (!profile.touch) return []; // E-paper usually has no touch or handled differently
 
     const t = profile.touch;
@@ -46,7 +46,17 @@ function generateTouchscreenSection(profile, displayId = "my_display") {
 
     if (t.calibration) {
         lines.push("    calibration:");
-        Object.entries(t.calibration).forEach(([k, v]) => lines.push(`      ${k}: ${v}`));
+        // Swap x/y calibration values when display is rotated 90 or 270 degrees
+        const cal = t.calibration;
+        if (displayRotation === 90 || displayRotation === 270) {
+            // Swap x and y calibration for 90/270 rotation
+            if (cal.x_min !== undefined) lines.push(`      x_min: ${cal.y_min}`);
+            if (cal.x_max !== undefined) lines.push(`      x_max: ${cal.y_max}`);
+            if (cal.y_min !== undefined) lines.push(`      y_min: ${cal.x_min}`);
+            if (cal.y_max !== undefined) lines.push(`      y_max: ${cal.x_max}`);
+        } else {
+            Object.entries(cal).forEach(([k, v]) => lines.push(`      ${k}: ${v}`));
+        }
     }
 
     lines.push("");
@@ -188,8 +198,24 @@ function generateSPISection(profile) {
     return lines;
 }
 
-function generateDisplaySection(profile) {
+function generateDisplaySection(profile, orientation = 'landscape') {
     const lines = [];
+
+    // Calculate rotation based on orientation and device's native aspect ratio
+    // Native portrait devices (height > width): portrait=0, landscape=90
+    // Native landscape devices (width >= height): landscape=0, portrait=90
+    const resolution = profile.resolution || { width: 800, height: 480 };
+    const isNativePortrait = resolution.height > resolution.width;
+    const isRequestedPortrait = orientation === 'portrait';
+
+    let displayRotation = 0;
+    if (isNativePortrait) {
+        // Device like M5Paper (540x960) - native portrait
+        displayRotation = isRequestedPortrait ? 0 : 90;
+    } else {
+        // Device like reTerminal (800x480) - native landscape
+        displayRotation = isRequestedPortrait ? 90 : 0;
+    }
 
 
     // Display Platform Configuration
@@ -220,8 +246,8 @@ function generateDisplaySection(profile) {
         addPin("reset_pin", p.reset);
         addPin("busy_pin", p.busy);
 
+        lines.push(`    rotation: ${displayRotation}`);
         if (profile.displayModel === "M5Paper" || profile.displayPlatform === "it8951e") {
-            lines.push("    rotation: 0");
             lines.push("    reversed: false");
             lines.push("    reset_duration: 100ms");
         }
@@ -260,7 +286,7 @@ function generateDisplaySection(profile) {
     // Add Touchscreen if present
     // Fallback generation (e-paper) uses epaper_display, custom/LCD likely uses my_display
     const linkedDisplayId = profile.display_config ? "my_display" : "epaper_display";
-    lines.push(...generateTouchscreenSection(profile, linkedDisplayId));
+    lines.push(...generateTouchscreenSection(profile, linkedDisplayId, displayRotation));
 
     // Note: Backlight section is generated in yaml_export.js, not here (to avoid duplicates)
 

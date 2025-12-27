@@ -212,7 +212,12 @@ class LayoutManager {
 
     getDeviceDisplayName(model) {
         if (window.DEVICE_PROFILES && window.DEVICE_PROFILES[model]) {
-            return window.DEVICE_PROFILES[model].name;
+            let name = window.DEVICE_PROFILES[model].name;
+            const supportedIds = window.SUPPORTED_DEVICE_IDS || [];
+            if (!supportedIds.includes(model)) {
+                name += " (untested)";
+            }
+            return name;
         }
         const names = {
             "reterminal_e1001": "E1001 (Mono)",
@@ -221,12 +226,12 @@ class LayoutManager {
             "esp32_s3_photopainter": "PhotoPainter (7-Color)"
         };
         // Also handle short codes (E1001, E1002, TRMNL)
-        if (names[model]) return names[model];
-        if (model === "E1001") return "E1001 (Mono)";
-        if (model === "E1002") return "E1002 (Color)";
-        if (model === "PhotoPainter") return "PhotoPainter (7-Color)";
-        if (model?.toLowerCase() === "trmnl") return "TRMNL";
-        return model || "Unknown";
+        let name = names[model] || model || "Unknown";
+
+        // If it's a known non-supported model or shortcode, we don't necessarily know if it's supported here
+        // but the main check is the DEVICE_PROFILES one above.
+
+        return name;
     }
 
     async loadLayout(layoutId) {
@@ -416,9 +421,14 @@ class LayoutManager {
 
     generateDeviceOptions() {
         if (window.DEVICE_PROFILES) {
-            return Object.entries(window.DEVICE_PROFILES).map(([key, profile]) =>
-                `<option value="${key}">${profile.name}</option>`
-            ).join("");
+            const supportedIds = window.SUPPORTED_DEVICE_IDS || [];
+            return Object.entries(window.DEVICE_PROFILES).map(([key, profile]) => {
+                let displayName = profile.name;
+                if (!supportedIds.includes(key)) {
+                    displayName += " (untested)";
+                }
+                return `<option value="${key}">${displayName}</option>`;
+            }).join("");
         }
         return `<option value="reterminal_e1001">reTerminal E1001</option>`;
     }

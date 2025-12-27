@@ -14,6 +14,18 @@ class KeyboardHandler {
         const selectedWidgetId = AppState.selectedWidgetId;
         const isAutoHighlight = window.isAutoHighlight || false; // Global flag from snippet editor
 
+        // Quick Search: Shift+Space
+        if (ev.shiftKey && ev.code === "Space") {
+            // Don't trigger in input fields
+            if (ev.target.tagName !== "INPUT" && ev.target.tagName !== "TEXTAREA") {
+                ev.preventDefault();
+                if (window.QuickSearch) {
+                    window.QuickSearch.open();
+                }
+                return;
+            }
+        }
+
         // Delete / Backspace
         if ((ev.key === "Delete" || ev.key === "Backspace") && selectedWidgetId) {
             // Special case: If snippet box is focused but selection matches the auto-highlight,

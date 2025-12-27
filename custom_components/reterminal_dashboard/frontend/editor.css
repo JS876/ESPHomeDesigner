@@ -953,3 +953,126 @@ textarea:focus {
     max-height: 50vh;
   }
 }
+
+/* ============================================
+   Quick Search Modal (Shift+Space Command Palette)
+   ============================================ */
+.quick-search-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+}
+
+.quick-search-modal.hidden {
+  display: none;
+}
+
+.quick-search-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.quick-search-container {
+  position: relative;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  width: 480px;
+  max-width: 90vw;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.quick-search-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.quick-search-icon {
+  font-size: 18px;
+  opacity: 0.7;
+}
+
+.quick-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: var(--text);
+  font-family: var(--font);
+}
+
+.quick-search-input::placeholder {
+  color: var(--muted);
+}
+
+.quick-search-results {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.quick-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.quick-search-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.quick-search-item.selected {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.quick-search-item-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.quick-search-item-category {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.quick-search-item.selected .quick-search-item-category {
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.quick-search-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.quick-search-hint {
+  display: flex;
+  gap: 16px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  color: var(--muted);
+}

@@ -32,7 +32,16 @@ class StateStore {
                 no_refresh_end_hour: null,
                 editor_light_mode: false,
                 grid_opacity: 8,
-                device_model: "reterminal_e1001" // Ensure it's in settings too for consistency
+                device_model: "reterminal_e1001", // Ensure it's in settings too for consistency
+                ai_provider: "gemini",
+                ai_api_key_gemini: "",
+                ai_api_key_openai: "",
+                ai_api_key_openrouter: "",
+                ai_model_gemini: "gemini-1.5-flash",
+                ai_model_openai: "gpt-4o",
+                ai_model_openrouter: "",
+                ai_model_filter: "",
+                extended_latin_glyphs: false // Enable GF_Latin_Core glyphset for diacritics (ľščťž, etc.)
             },
 
             // Editor State
@@ -61,6 +70,9 @@ class StateStore {
                 this.saveToLocalStorage();
             }
         });
+
+        // Load AI keys from dedicated local storage
+        this.loadAIKeysFromLocalStorage();
     }
 
     reset() {
@@ -157,9 +169,20 @@ class StateStore {
     }
 
     getPagesPayload() {
+        const settings = { ...this.state.settings };
+
+        // SECURITY: Explictly remove AI API keys from the payload and settings
+        // These keys are stored separately in dedicated localStorage and should
+        // never be part of a JSON export or Home Assistant backend save.
+        Object.keys(settings).forEach(key => {
+            if (key.startsWith('ai_api_key_')) {
+                delete settings[key];
+            }
+        });
+
         return {
             pages: this.state.pages,
-            ...this.state.settings
+            ...settings
         };
     }
 
@@ -202,6 +225,40 @@ class StateStore {
         return null;
     }
 
+    /**
+     * Saves sensitive AI API keys to a dedicated localStorage key.
+     * These keys are never included in layout exports.
+     */
+    saveAIKeysToLocalStorage() {
+        try {
+            const keys = {};
+            Object.keys(this.state.settings).forEach(key => {
+                if (key.startsWith('ai_api_key_')) {
+                    keys[key] = this.state.settings[key];
+                }
+            });
+            localStorage.setItem('esphome-designer-ai-keys', JSON.stringify(keys));
+        } catch (e) {
+            console.warn("[StateStore] Failed to save AI keys to localStorage:", e);
+        }
+    }
+
+    /**
+     * Loads sensitive AI API keys from the dedicated localStorage key.
+     */
+    loadAIKeysFromLocalStorage() {
+        try {
+            const data = localStorage.getItem('esphome-designer-ai-keys');
+            if (data) {
+                const keys = JSON.parse(data);
+                this.state.settings = { ...this.state.settings, ...keys };
+                console.log("[StateStore] AI keys loaded from local storage");
+            }
+        } catch (e) {
+            console.warn("[StateStore] Failed to load AI keys from localStorage:", e);
+        }
+    }
+
     // --- Actions ---
 
     setPages(pages) {
@@ -226,6 +283,13 @@ class StateStore {
 
     updateSettings(newSettings) {
         this.state.settings = { ...this.state.settings, ...newSettings };
+
+        // If any AI API keys were updated, save them to dedicated local storage
+        const hasAIKeys = Object.keys(newSettings).some(key => key.startsWith('ai_api_key_'));
+        if (hasAIKeys) {
+            this.saveAIKeysToLocalStorage();
+        }
+
         emit(EVENTS.SETTINGS_CHANGED, this.state.settings);
         emit(EVENTS.STATE_CHANGED);
     }

@@ -6,6 +6,18 @@
 // Used to generate all hardware-related YAML sections (sensors, buttons, etc.)
 // ============================================================================
 
+// List of devices explicitly confirmed to work.
+// All other devices will be marked as (untested) in the UI.
+window.SUPPORTED_DEVICE_IDS = [
+  'reterminal_e1001',
+  'reterminal_e1002',
+  'trmnl_diy_esp32s3',
+  'esp32_s3_photopainter',
+  'm5stack_paper',
+  'm5stack_coreink',
+  'trmnl'
+];
+
 window.DEVICE_PROFILES = {
   // ========================================================================
   // SEEED STUDIO DEVICES
@@ -199,7 +211,7 @@ window.DEVICE_PROFILES = {
   // OTHER DEVICES
   // ========================================================================
   m5stack_coreink: {
-    name: "M5Stack CoreInk (200x200)",
+    name: "M5Stack M5Core Ink (200x200)",
     displayModel: "1.54inv2",
     displayPlatform: "waveshare_epaper",
     resolution: { width: 200, height: 200 },
@@ -245,7 +257,8 @@ window.DEVICE_PROFILES = {
       buttons: true, // Has multifunction button
       lcd: false,
       epaper: true,
-      touch: true // Has GT911
+      touch: true, // Has GT911
+      inverted_colors: true
     },
     pins: {
       display: { cs: "GPIO15", dc: null, reset: "GPIO23", busy: "GPIO27" }, // DC not used for IT8951E

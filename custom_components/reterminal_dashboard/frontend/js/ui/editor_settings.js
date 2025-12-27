@@ -17,6 +17,22 @@ class EditorSettings {
         this.haLlatToken = document.getElementById('haLlatToken');
         this.testHaBtn = document.getElementById('editorTestHaBtn');
         this.haTestResult = document.getElementById('haTestResult');
+
+        // AI Settings
+        this.aiProvider = document.getElementById('aiProvider');
+        this.aiApiKeyGemini = document.getElementById('aiApiKeyGemini');
+        this.aiApiKeyOpenai = document.getElementById('aiApiKeyOpenai');
+        this.aiApiKeyOpenrouter = document.getElementById('aiApiKeyOpenrouter');
+        this.aiModelFilter = document.getElementById('aiModelFilter');
+        this.aiModelSelect = document.getElementById('aiModelSelect');
+        this.aiRefreshModelsBtn = document.getElementById('aiRefreshModelsBtn');
+        this.aiTestResult = document.getElementById('aiTestResult');
+
+        this.aiKeyRows = {
+            gemini: document.getElementById('aiKeyGeminiRow'),
+            openai: document.getElementById('aiKeyOpenaiRow'),
+            openrouter: document.getElementById('aiKeyOpenrouterRow')
+        };
     }
 
     init() {
@@ -51,6 +67,16 @@ class EditorSettings {
             this.lightMode.checked = !!settings.editor_light_mode;
         }
 
+        // AI Settings
+        if (this.aiProvider) this.aiProvider.value = settings.ai_provider || "gemini";
+        if (this.aiApiKeyGemini) this.aiApiKeyGemini.value = settings.ai_api_key_gemini || "";
+        if (this.aiApiKeyOpenai) this.aiApiKeyOpenai.value = settings.ai_api_key_openai || "";
+        if (this.aiApiKeyOpenrouter) this.aiApiKeyOpenrouter.value = settings.ai_api_key_openrouter || "";
+        if (this.aiModelFilter) this.aiModelFilter.value = settings.ai_model_filter || "";
+
+        this.updateAIKeyVisibility();
+        this.refreshModelSelect();
+
         // Grid Opacity
         if (this.gridOpacity) {
             this.gridOpacity.value = settings.grid_opacity !== undefined ? settings.grid_opacity : 20;
@@ -60,6 +86,8 @@ class EditorSettings {
         if (this.haManualUrl) this.haManualUrl.value = getHaManualUrl() || "";
         if (this.haLlatToken) this.haLlatToken.value = getHaToken() || "";
         if (this.haTestResult) this.haTestResult.textContent = "";
+        if (this.aiTestResult) this.aiTestResult.textContent = "";
+
 
         // Dynamically show current origin for CORS tip
         const originPlaceholder = document.getElementById('haOriginPlaceholder');
@@ -184,6 +212,124 @@ class EditorSettings {
                     this.testHaBtn.disabled = false;
                 }
             });
+        }
+
+        // AI Listeners
+        if (this.aiProvider) {
+            this.aiProvider.addEventListener('change', () => {
+                AppState.updateSettings({ ai_provider: this.aiProvider.value });
+                this.updateAIKeyVisibility();
+                this.refreshModelSelect();
+            });
+        }
+
+        const bindAIKey = (id, key) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => AppState.updateSettings({ [key]: el.value.trim() }));
+        };
+        bindAIKey('aiApiKeyGemini', 'ai_api_key_gemini');
+        bindAIKey('aiApiKeyOpenai', 'ai_api_key_openai');
+        bindAIKey('aiApiKeyOpenrouter', 'ai_api_key_openrouter');
+
+        if (this.aiModelFilter) {
+            this.aiModelFilter.addEventListener('input', () => {
+                AppState.updateSettings({ ai_model_filter: this.aiModelFilter.value });
+                this.filterModels();
+            });
+        }
+
+        if (this.aiModelSelect) {
+            this.aiModelSelect.addEventListener('change', () => {
+                const provider = AppState.settings.ai_provider;
+                AppState.updateSettings({ [`ai_model_${provider}`]: this.aiModelSelect.value });
+            });
+        }
+
+        if (this.aiRefreshModelsBtn) {
+            this.aiRefreshModelsBtn.addEventListener('click', async () => {
+                const provider = AppState.settings.ai_provider;
+                const apiKey = AppState.settings[`ai_api_key_${provider}`];
+                if (!apiKey) {
+                    showToast("Please enter an API key first", "error");
+                    return;
+                }
+
+                this.aiRefreshModelsBtn.disabled = true;
+                this.aiRefreshModelsBtn.textContent = "...";
+                if (this.aiTestResult) {
+                    this.aiTestResult.textContent = "Testing...";
+                    this.aiTestResult.style.color = "var(--muted)";
+                }
+
+                try {
+                    const models = await window.aiService.fetchModels(provider, apiKey);
+                    window.aiService.cache.models[provider] = models;
+                    this.refreshModelSelect();
+                    // showToast(`Fetched ${models.length} models`, "success");
+                    if (this.aiTestResult) {
+                        this.aiTestResult.textContent = `✅ Success! Found ${models.length} models.`;
+                        this.aiTestResult.style.color = "var(--success)";
+                    }
+                } catch (e) {
+                    // showToast("Failed to fetch models", "error");
+                    if (this.aiTestResult) {
+                        this.aiTestResult.textContent = "❌ Failed. Check key/console.";
+                        this.aiTestResult.style.color = "var(--danger)";
+                    }
+                } finally {
+                    this.aiRefreshModelsBtn.disabled = false;
+                    this.aiRefreshModelsBtn.textContent = "Test & Load Models";
+                }
+            });
+        }
+    }
+
+    updateAIKeyVisibility() {
+        const provider = AppState.settings.ai_provider || "gemini";
+        Object.keys(this.aiKeyRows).forEach(p => {
+            if (this.aiKeyRows[p]) {
+                this.aiKeyRows[p].style.display = (p === provider) ? "block" : "none";
+            }
+        });
+    }
+
+    async refreshModelSelect() {
+        if (!this.aiModelSelect) return;
+        const provider = AppState.settings.ai_provider || "gemini";
+
+        let models = window.aiService.cache.models[provider];
+        if (!models) {
+            // No models in cache, but we don't hardcode them anymore.
+            // User must click "Test & Load Models" to populate.
+            models = [];
+            window.aiService.cache.models[provider] = models;
+        }
+
+        this.filterModels();
+    }
+
+    filterModels() {
+        if (!this.aiModelSelect) return;
+        const provider = AppState.settings.ai_provider || "gemini";
+        const filterStr = (AppState.settings.ai_model_filter || "").toLowerCase();
+        const models = window.aiService.cache.models[provider] || [];
+
+        const filtered = models.filter(m =>
+            m.name.toLowerCase().includes(filterStr) ||
+            m.id.toLowerCase().includes(filterStr)
+        );
+
+        this.aiModelSelect.innerHTML = "";
+        filtered.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.name;
+            this.aiModelSelect.appendChild(opt);
+        });
+
+        const currentModel = AppState.settings[`ai_model_${provider}`];
+        if (currentModel) {
+            this.aiModelSelect.value = currentModel;
         }
     }
 

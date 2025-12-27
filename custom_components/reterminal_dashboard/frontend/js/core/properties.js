@@ -688,7 +688,106 @@ class PropertiesPanel {
 
             this.addSelect("Color", props.color || "black", colors, (v) => updateProp("color", v));
         }
+        else if (type === "wifi_signal") {
+            // WiFi Signal Strength Widget
+            // Entity ID with built-in picker (for remote HA sensors)
+            this.addLabeledInputWithPicker("WiFi Signal Entity ID", "text", widget.entity_id || "", (v) => {
+                AppState.updateWidget(widget.id, { entity_id: v });
+            }, widget);
+
+            this.addCheckbox("Local / On-Device Sensor", props.is_local_sensor !== false, (v) => updateProp("is_local_sensor", v));
+            this.addCheckbox("Show dBm value", props.show_dbm !== false, (v) => updateProp("show_dbm", v));
+            this.addCheckbox("Fit icon to frame", props.fit_icon_to_frame || false, (v) => updateProp("fit_icon_to_frame", v));
+
+            this.addLabeledInput("Icon Size (px)", "number", props.size || 24, (v) => {
+                let n = parseInt(v || "24", 10);
+                if (Number.isNaN(n) || n < 16) n = 16;
+                if (n > 200) n = 200;
+                updateProp("size", n);
+            });
+
+            this.addLabeledInput("dBm Font Size (px)", "number", props.font_size || 12, (v) => {
+                let n = parseInt(v || "12", 10);
+                if (Number.isNaN(n) || n < 8) n = 8;
+                if (n > 100) n = 100;
+                updateProp("font_size", n);
+            });
+
+            this.addSelect("Color", props.color || "black", colors, (v) => updateProp("color", v));
+        }
+        else if (type === "ondevice_temperature") {
+            // On-Device Temperature Widget (SHT4x sensor)
+            this.addLabeledInputWithPicker("Temperature Entity ID", "text", widget.entity_id || "", (v) => {
+                AppState.updateWidget(widget.id, { entity_id: v });
+            }, widget);
+
+            this.addCheckbox("Local / On-Device Sensor (SHT4x)", props.is_local_sensor !== false, (v) => updateProp("is_local_sensor", v));
+            this.addCheckbox("Fit icon to frame", props.fit_icon_to_frame || false, (v) => updateProp("fit_icon_to_frame", v));
+            this.addCheckbox("Show Label", props.show_label !== false, (v) => updateProp("show_label", v));
+
+            this.addLabeledInput("Icon Size (px)", "number", props.size || 32, (v) => {
+                let n = parseInt(v || "32", 10);
+                if (Number.isNaN(n) || n < 16) n = 16;
+                if (n > 200) n = 200;
+                updateProp("size", n);
+            });
+
+            this.addLabeledInput("Value Font Size (px)", "number", props.font_size || 16, (v) => {
+                let n = parseInt(v || "16", 10);
+                if (Number.isNaN(n) || n < 8) n = 8;
+                if (n > 200) n = 200;
+                updateProp("font_size", n);
+            });
+
+            this.addLabeledInput("Label Font Size (px)", "number", props.label_font_size || 10, (v) => {
+                let n = parseInt(v || "10", 10);
+                if (Number.isNaN(n) || n < 8) n = 8;
+                if (n > 100) n = 100;
+                updateProp("label_font_size", n);
+            });
+
+            this.addLabeledInput("Unit", "text", props.unit || "°C", (v) => updateProp("unit", v));
+            this.addLabeledInput("Precision", "number", props.precision ?? 1, (v) => updateProp("precision", parseInt(v, 10)));
+            this.addSelect("Color", props.color || "black", colors, (v) => updateProp("color", v));
+        }
+        else if (type === "ondevice_humidity") {
+            // On-Device Humidity Widget (SHT4x sensor)
+            this.addLabeledInputWithPicker("Humidity Entity ID", "text", widget.entity_id || "", (v) => {
+                AppState.updateWidget(widget.id, { entity_id: v });
+            }, widget);
+
+            this.addCheckbox("Local / On-Device Sensor (SHT4x)", props.is_local_sensor !== false, (v) => updateProp("is_local_sensor", v));
+            this.addCheckbox("Fit icon to frame", props.fit_icon_to_frame || false, (v) => updateProp("fit_icon_to_frame", v));
+            this.addCheckbox("Show Label", props.show_label !== false, (v) => updateProp("show_label", v));
+
+            this.addLabeledInput("Icon Size (px)", "number", props.size || 32, (v) => {
+                let n = parseInt(v || "32", 10);
+                if (Number.isNaN(n) || n < 16) n = 16;
+                if (n > 200) n = 200;
+                updateProp("size", n);
+            });
+
+            this.addLabeledInput("Value Font Size (px)", "number", props.font_size || 16, (v) => {
+                let n = parseInt(v || "16", 10);
+                if (Number.isNaN(n) || n < 8) n = 8;
+                if (n > 200) n = 200;
+                updateProp("font_size", n);
+            });
+
+            this.addLabeledInput("Label Font Size (px)", "number", props.label_font_size || 10, (v) => {
+                let n = parseInt(v || "10", 10);
+                if (Number.isNaN(n) || n < 8) n = 8;
+                if (n > 100) n = 100;
+                updateProp("label_font_size", n);
+            });
+
+            this.addLabeledInput("Unit", "text", props.unit || "%", (v) => updateProp("unit", v));
+            this.addLabeledInput("Precision", "number", props.precision ?? 0, (v) => updateProp("precision", parseInt(v, 10)));
+            this.addSelect("Color", props.color || "black", colors, (v) => updateProp("color", v));
+        }
+
         else if (type === "weather_icon") {
+
             // Fix: Add Entity ID picker for weather_icon
             this.addLabeledInputWithPicker("Weather Entity ID", "text", widget.entity_id || "", (v) => {
                 AppState.updateWidget(widget.id, { entity_id: v });
@@ -1151,6 +1250,20 @@ class PropertiesPanel {
                     AppState.updateWidget(widget.id, { entity_id: v });
                 }, widget);
                 this.addHint("Controls this entity number/level");
+
+                // Orientation (vertical/horizontal)
+                const isVertical = props.vertical || false;
+                this.addSelect("Orientation", isVertical ? "Vertical" : "Horizontal", ["Horizontal", "Vertical"], (v) => {
+                    const newVertical = v === "Vertical";
+                    // Swap width/height when changing orientation
+                    const oldW = widget.width;
+                    const oldH = widget.height;
+                    AppState.updateWidget(widget.id, {
+                        props: { ...props, vertical: newVertical },
+                        width: oldH,
+                        height: oldW
+                    });
+                });
 
                 this.addLabeledInput("Min Value", "number", props.min || 0, (v) => updateProp("min", parseInt(v, 10)));
                 this.addLabeledInput("Max Value", "number", props.max || 100, (v) => updateProp("max", parseInt(v, 10)));

@@ -833,7 +833,8 @@ function parseSnippetYamlOffline(yamlText) {
                         border_width: parseInt(p.border_width || 2, 10),
                         color: p.color || "blue",
                         bg_color: p.bg_color || "gray",
-                        mode: p.mode || "NORMAL"
+                        mode: p.mode || "NORMAL",
+                        vertical: (p.vertical === "true" || p.vertical === true)
                     };
                 } else if (widgetType === "lvgl_tabview") {
                     widget.props = {

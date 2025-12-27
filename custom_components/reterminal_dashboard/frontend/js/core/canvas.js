@@ -499,12 +499,56 @@ class Canvas {
         }
 
         // Mouse wheel zoom on canvas container
+        // Differentiates between mouse wheel (zoom) and touchpad scroll (pan)
         if (this.canvasContainer) {
             this.canvasContainer.addEventListener("wheel", (ev) => {
-                // Zoom on wheel
-                const delta = ev.deltaY > 0 ? -0.1 : 0.1;
-                const newZoom = AppState.zoomLevel + delta;
-                AppState.setZoomLevel(newZoom);
+                ev.preventDefault();
+
+                // Detect pinch-to-zoom (Ctrl+wheel on trackpads or Ctrl+scroll on mouse)
+                if (ev.ctrlKey) {
+                    // Pinch zoom: deltaY is inverted, scale more smoothly
+                    const delta = ev.deltaY > 0 ? -0.05 : 0.05;
+                    const newZoom = AppState.zoomLevel + delta;
+                    AppState.setZoomLevel(newZoom);
+                } else {
+                    // Detect if this is a mouse wheel vs touchpad scroll
+                    // Mouse wheel: quantized deltaY (typically ±100/±120), no deltaX
+                    // Touchpad: fractional deltaY, often has deltaX for horizontal scroll
+                    const isMouse = ev.deltaMode === 0 && ev.deltaX === 0 && Math.abs(ev.deltaY) >= 50;
+
+                    if (isMouse) {
+                        // Mouse wheel: zoom in/out
+                        const delta = ev.deltaY > 0 ? -0.1 : 0.1;
+                        AppState.setZoomLevel(AppState.zoomLevel + delta);
+                    } else {
+                        // Touchpad two-finger scroll: pan the canvas
+                        this.panX -= ev.deltaX;
+                        this.panY -= ev.deltaY;
+                        this.applyZoom();
+                    }
+                }
+            }, { passive: false });
+        }
+
+        // Capture wheel events on viewport (dark area) to prevent browser zoom
+        if (this.viewport) {
+            this.viewport.addEventListener("wheel", (ev) => {
+                ev.preventDefault();
+                // Forward the event logic - detect mouse vs touchpad same as above
+                if (ev.ctrlKey) {
+                    const delta = ev.deltaY > 0 ? -0.05 : 0.05;
+                    AppState.setZoomLevel(AppState.zoomLevel + delta);
+                } else {
+                    const isMouse = ev.deltaMode === 0 && ev.deltaX === 0 && Math.abs(ev.deltaY) >= 50;
+                    if (isMouse) {
+                        const delta = ev.deltaY > 0 ? -0.1 : 0.1;
+                        AppState.setZoomLevel(AppState.zoomLevel + delta);
+                    } else {
+                        this.panX -= ev.deltaX;
+                        this.panY -= ev.deltaY;
+                        this.applyZoom();
+                    }
+                }
             }, { passive: false });
         }
 
@@ -517,6 +561,9 @@ class Canvas {
                 ev.preventDefault();
                 this.zoomOut();
             } else if (ev.ctrlKey && ev.key === "0") {
+                ev.preventDefault();
+                this.zoomReset();
+            } else if (ev.ctrlKey && ev.key.toLowerCase() === "r") {
                 ev.preventDefault();
                 this.zoomReset();
             }
@@ -671,7 +718,8 @@ class Canvas {
             widget.height = Math.round(h);
 
             // Special handling for icons
-            if (wtype === "icon" || wtype === "weather_icon" || wtype === "battery_icon") {
+            if (wtype === "icon" || wtype === "weather_icon" || wtype === "battery_icon" || wtype === "wifi_signal") {
+
                 const props = widget.props || {};
                 if (props.fit_icon_to_frame) {
                     const padding = 4;

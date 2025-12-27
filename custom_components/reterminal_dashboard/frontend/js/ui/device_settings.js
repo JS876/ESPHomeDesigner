@@ -9,6 +9,8 @@ class DeviceSettings {
         this.modelInput = document.getElementById('deviceModel');
         this.orientationInput = document.getElementById('deviceOrientation');
         this.darkModeInput = document.getElementById('deviceDarkMode');
+        this.extendedLatinGlyphsInput = document.getElementById('deviceExtendedLatinGlyphs');
+        this.invertedColorsInput = document.getElementById('deviceInvertedColors');
 
         // Power Strategy
         this.modeStandard = document.getElementById('mode-standard');
@@ -85,6 +87,8 @@ class DeviceSettings {
         if (this.modelInput) this.modelInput.value = AppState.settings.device_model || "reterminal_e1001";
         if (this.orientationInput) this.orientationInput.value = AppState.settings.orientation || "landscape";
         if (this.darkModeInput) this.darkModeInput.checked = !!AppState.settings.dark_mode;
+        if (this.extendedLatinGlyphsInput) this.extendedLatinGlyphsInput.checked = !!AppState.settings.extended_latin_glyphs;
+        if (this.invertedColorsInput) this.invertedColorsInput.checked = !!AppState.settings.inverted_colors;
 
         // Determine power mode
         const s = AppState.settings;
@@ -132,12 +136,20 @@ class DeviceSettings {
 
             console.log("[DeviceSettings] Populating dropdown with", Object.keys(window.DEVICE_PROFILES).length, "profiles");
 
+            const supportedIds = window.SUPPORTED_DEVICE_IDS || [];
+
             // Convert profiles to array and sort if possible, or just iterate
             Object.entries(window.DEVICE_PROFILES).forEach(([key, profile]) => {
                 console.log(`  - Adding: ${key} (${profile.name})`);
                 const opt = document.createElement("option");
                 opt.value = key;
-                opt.textContent = profile.name;
+
+                let displayName = profile.name;
+                if (!supportedIds.includes(key)) {
+                    displayName += " (untested)";
+                }
+                opt.textContent = displayName;
+
                 this.modelInput.appendChild(opt);
             });
 
@@ -238,6 +250,20 @@ class DeviceSettings {
         if (this.darkModeInput) {
             this.darkModeInput.addEventListener('change', () => {
                 updateSetting('dark_mode', this.darkModeInput.checked);
+            });
+        }
+
+        // Extended Latin Glyphs (diacritics)
+        if (this.extendedLatinGlyphsInput) {
+            this.extendedLatinGlyphsInput.addEventListener('change', () => {
+                updateSetting('extended_latin_glyphs', this.extendedLatinGlyphsInput.checked);
+            });
+        }
+
+        // Inverted Colors (for e-paper displays with swapped black/white)
+        if (this.invertedColorsInput) {
+            this.invertedColorsInput.addEventListener('change', () => {
+                updateSetting('inverted_colors', this.invertedColorsInput.checked);
             });
         }
 

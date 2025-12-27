@@ -1150,7 +1150,7 @@ class PropertiesPanel {
                 fillBtnContainer.style.gap = "8px";
                 fillBtnContainer.style.marginBottom = "8px";
 
-                const resolution = getDeviceResolution ? getDeviceResolution() : { width: 800, height: 480 };
+                const resolution = AppState.getCanvasDimensions();
                 const canvasW = resolution.width;
                 const canvasH = resolution.height;
 

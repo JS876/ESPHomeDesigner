@@ -541,11 +541,11 @@ class WidgetFactory {
                     show_humidity: true,
                     show_battery: true,
                     show_background: true,
-                    background_color: "gray",
+                    background_color: "black",
                     border_radius: 8,
                     icon_size: 20,
                     font_size: 14,
-                    color: defaultColor
+                    color: "white"
                 };
                 break;
 
@@ -557,10 +557,10 @@ class WidgetFactory {
                     show_home: true,
                     show_next: true,
                     show_background: true,
-                    background_color: "gray",
+                    background_color: "black",
                     border_radius: 8,
                     icon_size: 24,
-                    color: defaultColor
+                    color: "white"
                 };
                 break;
 

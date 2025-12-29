@@ -1,5 +1,26 @@
 # Release Notes
 
+## v0.8.5 - Round Displays & Hardware Expansion
+
+**Release Date:** December 29, 2025
+
+### 🚀 New Features
+- **Round Display Support**: Introduced support for round/circular display canvases, including correct coordinate mapping and visual boundaries in the designer.
+- **Improved Hardware Expansion**: Added dedicated support and tested hardware recipes for the **WaveShare Universal ESP32 e-Paper Driver Board** paired with the **7.5" v2 display**.
+- **Dynamic Orientation**: Updated import logic to respect `# Orientation: portrait/landscape` tags, automatically rotating the canvas to match the device's physical mounting.
+- **Resolution & Shape Metadata**: Imported YAML files with `# Resolution: WxH` or `# Shape: round/rect` comments will now automatically resize and reshape the designer canvas to match the hardware.
+- **Premium Default Theme for Bars**: The `template_nav_bar` and `template_sensor_bar` widgets now default to a high-contrast white-on-black theme for better readability and a more premium aesthetic.
+- **New Hardware Support**: Added support for the **WaveShare Universal ESP32 epaper driver board** and **7.5" v2 display** via hardware recipes. Many thanks to **EmilyNerdGirl** for contributing this recipe!
+- **Hardware Recipe Documentation**: Expanded the [Hardware Recipes Guide](https://github.com/koosoli/ESPHomeDesigner/blob/main/hardware_recipes_guide.md) with comprehensive documentation for all supported metadata tags, including `# Orientation`, `# Dark Mode`, and `# Refresh Interval`.
+
+### 🐛 Bug Fixes
+- **Custom Resolution Import Fix**: Resolved a critical issue where custom resolutions from hardware recipes were ignored during import, resetting the canvas to 800x480.
+- **Inverted Color Metadata**: Added support for the `# Inverted: true/false` metadata tag in imported YAML files, ensuring correct color mapping from the first load.
+- **E-Paper Page Cycling Logic**: Refactored the `auto_cycle_timer` to use a robust delay-based loop and ensured the countdown resets on manual page interaction, resolving issues where cycling would stall or trigger unpredictably.
+- **Global Variable YAML Compliance**: Fixed ESPHome validation errors by wrapping numeric and boolean `initial_value` fields in quotes, ensuring compatibility with ESPHome 2024.11+.
+
+---
+
 ## v0.8.4 - Weather Icon Sensor Fix
 
 **Release Date:** December 29, 2025
@@ -25,6 +46,9 @@
 - **M5 Touch Area Precision**: Fixed a bug in the coordinate transformation logic for M5 devices (specifically M5Paper) that caused touch inputs to be rotated 90° relative to the display. This ensures navigation buttons align correctly with visual elements. *Note: This fix remains untested on physical hardware.*
 - **Navigation Widget Height Persistence**: Fixed a critical bug where `template_nav_bar` and navigation touch buttons would reset their height to 10px on page refresh in the deployed Home Assistant version. The Python backend's `clamp_to_canvas()` function was using hardcoded 800x480 landscape dimensions, incorrectly clamping widget heights for portrait layouts or devices with non-standard resolutions (e.g., M5Paper 540x960).
 - **Gray Background Rendering**: Fixed an issue where `template_nav_bar` and `template_sensor_bar` widgets rendered their backgrounds as solid black instead of gray. The export logic was incorrectly using the foreground (icon) color for backgrounds and checking the wrong property for dithering.
+- **E-Paper Page Cycling Fix**: Fixed a regression in the `auto_cycle_timer` script generation where the missing `mode: restart` attribute prevented recursive execution, causing auto-cycling to stop after the first page change.
+- **Global Variable YAML Compliance**: Refactored the generation of numeric and boolean global variables (e.g., `display_page`, `page_refresh_default_s`) to remove redundant single quotes, improving compliance with strict YAML parsers and ensuring correct type inference in ESPHome.
+- **Hardware Profile & PSRAM Safety**: Improved analysis and documentation for hardware profiles. Identified that selecting mismatched profiles (e.g., reTerminal E1001 for generic ESP32-S3 boards) can cause boot loops due to incorrect PSRAM mode settings (`octal` vs `quad`). Added recommendations for the `update_interval: never` setting to prevent display update conflicts.
 
 ---
 

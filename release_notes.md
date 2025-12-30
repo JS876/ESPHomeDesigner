@@ -1,5 +1,6 @@
 # Release Notes
 
+
 ## v0.8.5 - Round Displays & Hardware Expansion
 
 **Release Date:** December 29, 2025
@@ -11,13 +12,20 @@
 - **Resolution & Shape Metadata**: Imported YAML files with `# Resolution: WxH` or `# Shape: round/rect` comments will now automatically resize and reshape the designer canvas to match the hardware.
 - **Premium Default Theme for Bars**: The `template_nav_bar` and `template_sensor_bar` widgets now default to a high-contrast white-on-black theme for better readability and a more premium aesthetic.
 - **New Hardware Support**: Added support for the **WaveShare Universal ESP32 epaper driver board** and **7.5" v2 display** via hardware recipes. Many thanks to **EmilyNerdGirl** for contributing this recipe!
-- **Hardware Recipe Documentation**: Expanded the [Hardware Recipes Guide](https://github.com/koosoli/ESPHomeDesigner/blob/main/hardware_recipes_guide.md) with comprehensive documentation for all supported metadata tags, including `# Orientation`, `# Dark Mode`, and `# Refresh Interval`.
+ - **Hardware Recipe Documentation**: Expanded the [Hardware Recipes Guide](https://github.com/koosoli/ESPHomeDesigner/blob/main/hardware_recipes_guide.md) with comprehensive documentation for all supported metadata tags, including `# Orientation`, `# Dark Mode`, and `# Refresh Interval`.
 
 ### 🐛 Bug Fixes
 - **Custom Resolution Import Fix**: Resolved a critical issue where custom resolutions from hardware recipes were ignored during import, resetting the canvas to 800x480.
 - **Inverted Color Metadata**: Added support for the `# Inverted: true/false` metadata tag in imported YAML files, ensuring correct color mapping from the first load.
 - **E-Paper Page Cycling Logic**: Refactored the `auto_cycle_timer` to use a robust delay-based loop and ensured the countdown resets on manual page interaction, resolving issues where cycling would stall or trigger unpredictably.
 - **Global Variable YAML Compliance**: Fixed ESPHome validation errors by wrapping numeric and boolean `initial_value` fields in quotes, ensuring compatibility with ESPHome 2024.11+.
+- **Playfair Display Glyph Fix**: Resolved an issue where the "Playfair Display" font caused ESPHome compilation errors (#105) due to a missing "µ" (micro) glyph. The designer now automatically filters out this character specifically for this font while preserving it for other font families.
+- **Line Object YAML Export Fix**: Fixed a critical issue where line objects generated invalid ESPHome YAML (#106). Points are now correctly formatted with `x` and `y` keys, and style properties (`line_opa`, `line_width`, etc.) are properly nested within a `style` block to comply with ESPHome LVGL requirements.
+- **LVGL Button & Opacity Fix**: Resolved ESPHome compilation errors (#104) by converting LVGL opacity values to percentages (e.g., `100%`) and correcting the `homeassistant.service` call structure for buttons (adding the missing `data:` block).
+- **Temperature & Humidity Sensor Fix**: Resolved issues (#102) where selecting a custom Home Assistant entity for on-device widgets caused "ID not found" errors. Standardized ID generation across all sensors to ensure hardware definitions and display lambdas always match.
+- **Local Sensor Hardware Support**: Fixed a bug where selecting "Local / On-Device Sensor" on DIY devices (like TRMNL DIY) failed to generate the required `sht4x` hardware platform, resulting in compilation failures. The designer now automatically includes the necessary hardware configuration if local widgets are used.
+- **Trmnl Device Fixes**: Fixed compilation errors for "Trmnl DIY" devices where local temperature/humidity sensors were incorrectly referenced. The system now safely handles cases where local sensors are requested but not supported by the hardware, and correctly sanitizes custom sensor IDs to prevent "Couldn't find ID" errors.
+- **Display Lambda Header Injection**: Fixed a critical bug where the `lambda: |-` header was incorrectly omitted if the string was found anywhere else in the file (e.g. in comments or other components). The generator now strictly checks for the header specifically preceding the lambda placeholder, ensuring valid YAML syntax for all display configurations.
 
 ---
 

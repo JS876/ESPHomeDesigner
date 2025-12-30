@@ -1313,7 +1313,7 @@ async function generateSnippetLocally() {
     // - Currency: € (U+20AC), £ (U+00A3), ¥ (U+00A5)
     // - General: © (U+00A9), ® (U+00AE), ™ (U+2122)
     // - Arrows: ←↑→↓ (U+2190-2193)
-    const EXTENDED_GLYPHS = [
+    const EXTENDED_GLYPHS_ARRAY = [
         // Basic Latin (ASCII)
         ...Array.from({ length: 95 }, (_, i) => `\\U000000${(i + 32).toString(16).padStart(2, '0')}`), // 0x20-0x7E
         "\\U000000B0", // Degree °
@@ -1332,7 +1332,7 @@ async function generateSnippetLocally() {
         "\\U000020AC", // Euro €
         "\\U00002122", // Trademark ™
         // Arrows removed as they are missing in Roboto (U+2190-U+2193)
-    ].map(g => `"${g}"`).join(", "); // Quote each glyph properly
+    ];
 
     const addFont = (family, weight, size, italic = false) => {
         const safeFamily = family.replace(/\s+/g, "_").toLowerCase();
@@ -1382,7 +1382,15 @@ async function generateSnippetLocally() {
                 } else {
                     // Default: Add extended glyphs to ensure units and standard symbols work
                     // Note: We inject raw string list directly, assuming ESPHome parser handles it
-                    fontLines.push(`    glyphs: [${EXTENDED_GLYPHS}]`);
+                    let glyphs = [...EXTENDED_GLYPHS_ARRAY];
+
+                    // ISSUE #105: Playfair Display does not support the Micro Sign (U+00B5)
+                    if (family === "Playfair Display") {
+                        glyphs = glyphs.filter(g => g !== "\\U000000B5");
+                    }
+
+                    const glyphList = glyphs.map(g => `"${g}"`).join(", ");
+                    fontLines.push(`    glyphs: [${glyphList}]`);
                 }
             }
         }
@@ -2186,33 +2194,45 @@ async function generateSnippetLocally() {
                             const labelFontRef = addFont("Roboto", 400, labelFontSize);
 
                             // Determine sensor ID
-                            let sensorId;
+                            let sensorId = null;
                             if (isLocal) {
                                 if (profile.features.sht4x) sensorId = "sht4x_temperature";
                                 else if (profile.features.sht3x) sensorId = "sht3x_temperature";
                                 else if (profile.features.shtc3) sensorId = "shtc3_temperature";
-                                else sensorId = "sht4x_temperature"; // Fallback
+                                else if (profile.features.sht4x !== false) sensorId = "sht4x_temperature"; // Legacy Fallback only if not explicitly false
                             } else {
-                                sensorId = entityId ? entityId.replace(/^sensor\./, "").replace(/\./g, "_").replace(/-/g, "_") : "sht4x_temperature";
+                                // Fix for Issue #102: Use consistent ID sanitization for custom entities
+                                // Matches the logic used in generateSensorSection
+                                sensorId = entityId ? entityId.replace(/[^a-zA-Z0-9_]/g, "_") : null;
                             }
 
                             lines.push(`        // widget:ondevice_temperature id:${w.id} x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity:${entityId || sensorId} icon_size:${iconSize} font_size:${fontSize} color:${colorProp} local:${isLocal} ${getCondProps(w)}`);
                             lines.push(`        {`);
                             lines.push(`          const char* temp_icon = "\\U000F050F"; // Default: thermometer`);
                             lines.push(`          float temp_val = NAN;`);
-                            lines.push(`          if (id(${sensorId}).has_state()) {`);
-                            lines.push(`            temp_val = id(${sensorId}).state;`);
-                            lines.push(`            if (temp_val <= 10) temp_icon = "\\U000F0E4C";      // thermometer-low`);
-                            lines.push(`            else if (temp_val > 25) temp_icon = "\\U000F10C2"; // thermometer-high`);
-                            lines.push(`          }`);
+
+                            if (sensorId) {
+                                lines.push(`          if (id(${sensorId}).has_state()) {`);
+                                lines.push(`            temp_val = id(${sensorId}).state;`);
+                                lines.push(`            if (temp_val <= 10) temp_icon = "\\U000F0E4C";      // thermometer-low`);
+                                lines.push(`            else if (temp_val > 25) temp_icon = "\\U000F10C2"; // thermometer-high`);
+                                lines.push(`          }`);
+                            }
+
                             // Icon centered at top
                             lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y}, id(${iconFontRef}), ${color}, TextAlign::TOP_CENTER, "%s", temp_icon);`);
                             // Value below icon
-                            lines.push(`          if (id(${sensorId}).has_state()) {`);
-                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "%.${precision}f${unit}", id(${sensorId}).state);`);
-                            lines.push(`          } else {`);
-                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
-                            lines.push(`          }`);
+                            if (sensorId) {
+                                lines.push(`          if (id(${sensorId}).has_state()) {`);
+                                lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "%.${precision}f${unit}", id(${sensorId}).state);`);
+                                lines.push(`          } else {`);
+                                lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
+                                lines.push(`          }`);
+                            } else {
+                                // Placeholder for missing sensor (e.g. Trmnl DIY with no local sensor)
+                                lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
+                            }
+
                             // Label below value
                             if (showLabel) {
                                 lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + fontSize + 4}, id(${labelFontRef}), ${color}, TextAlign::TOP_CENTER, "Temperature");`);
@@ -2239,33 +2259,43 @@ async function generateSnippetLocally() {
                             const labelFontRef = addFont("Roboto", 400, labelFontSize);
 
                             // Determine sensor ID
-                            let sensorId;
+                            let sensorId = null;
                             if (isLocal) {
                                 if (profile.features.sht4x) sensorId = "sht4x_humidity";
                                 else if (profile.features.sht3x) sensorId = "sht3x_humidity";
                                 else if (profile.features.shtc3) sensorId = "shtc3_humidity";
-                                else sensorId = "sht4x_humidity"; // Fallback
+                                else if (profile.features.sht4x !== false) sensorId = "sht4x_humidity"; // Fallback only if enabled
                             } else {
-                                sensorId = entityId ? entityId.replace(/^sensor\./, "").replace(/\./g, "_").replace(/-/g, "_") : "sht4x_humidity";
+                                // Fix for custom entity IDs
+                                sensorId = entityId ? entityId.replace(/[^a-zA-Z0-9_]/g, "_") : null;
                             }
 
                             lines.push(`        // widget:ondevice_humidity id:${w.id} x:${w.x} y:${w.y} w:${w.width} h:${w.height} entity:${entityId || sensorId} icon_size:${iconSize} font_size:${fontSize} color:${colorProp} local:${isLocal} ${getCondProps(w)}`);
                             lines.push(`        {`);
                             lines.push(`          const char* hum_icon = "\\U000F058E"; // Default: water-percent`);
                             lines.push(`          float hum_val = NAN;`);
-                            lines.push(`          if (id(${sensorId}).has_state()) {`);
-                            lines.push(`            hum_val = id(${sensorId}).state;`);
-                            lines.push(`            if (hum_val <= 30) hum_icon = "\\U000F0E7A";       // water-outline`);
-                            lines.push(`            else if (hum_val > 60) hum_icon = "\\U000F058C"; // water`);
-                            lines.push(`          }`);
+
+                            if (sensorId) {
+                                lines.push(`          if (id(${sensorId}).has_state()) {`);
+                                lines.push(`            hum_val = id(${sensorId}).state;`);
+                                lines.push(`            if (hum_val <= 30) hum_icon = "\\U000F0E7A";       // water-outline`);
+                                lines.push(`            else if (hum_val > 60) hum_icon = "\\U000F058C"; // water`);
+                                lines.push(`          }`);
+                            }
+
                             // Icon centered at top
                             lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y}, id(${iconFontRef}), ${color}, TextAlign::TOP_CENTER, "%s", hum_icon);`);
                             // Value below icon
-                            lines.push(`          if (id(${sensorId}).has_state()) {`);
-                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "%.${precision}f${unit}", id(${sensorId}).state);`);
-                            lines.push(`          } else {`);
-                            lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
-                            lines.push(`          }`);
+                            if (sensorId) {
+                                lines.push(`          if (id(${sensorId}).has_state()) {`);
+                                lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "%.${precision}f${unit}", id(${sensorId}).state);`);
+                                lines.push(`          } else {`);
+                                lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
+                                lines.push(`          }`);
+                            } else {
+                                lines.push(`            it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + 2}, id(${valueFontRef}), ${color}, TextAlign::TOP_CENTER, "--${unit}");`);
+                            }
+
                             // Label below value
                             if (showLabel) {
                                 lines.push(`          it.printf(${Math.round(w.x + w.width / 2)}, ${w.y + iconSize + fontSize + 4}, id(${labelFontRef}), ${color}, TextAlign::TOP_CENTER, "Humidity");`);
@@ -3065,9 +3095,10 @@ async function generateSnippetLocally() {
 
         // Store lambda for package-based devices (will be used for placeholder replacement)
         if (profile.isPackageBased && packageContent) {
-            // Check if recipe already contains the lambda header (avoids double lambda: |-)
-            const hasHeader = packageContent.includes("lambda: |-");
-            const lambdaContent = (hasHeader ? "" : "lambda: |-\n") + lambdaLines.join("\n");
+            // Check if recipe already contains the lambda header immediately before placeholder
+            // (Use strict regex to avoid matching unrelated lambdas elsewhere in the file)
+            const hasImmediateHeader = /lambda:\s*\|-\s*[\r\n]+\s*# __LAMBDA_PLACEHOLDER__/.test(packageContent);
+            const lambdaContent = (hasImmediateHeader ? "" : "lambda: |-\n") + lambdaLines.join("\n");
 
             packageContent = packageContent.replace("# __LAMBDA_PLACEHOLDER__", lambdaContent);
         }
